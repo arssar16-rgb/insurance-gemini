@@ -1,93 +1,603 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>لوحة متابعة طلبات التأمين - مدينة الملك سلمان الطبية</title>
-  
-  <!-- Tailwind CSS & FontAwesome -->
-  <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>لوحة متابعة طلبات التأمين الطبي | KSAMC</title>
 
-  <style>
-    body { font-family: 'Cairo', sans-serif; }
-    ::-webkit-scrollbar { width: 6px; height: 6px; }
-    ::-webkit-scrollbar-track { background: #f1f5f9; }
-    ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
-    ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
-  </style>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        fontFamily: { cairo: ['Cairo', 'sans-serif'] },
+        colors: { brand: { 50:'#eff6ff', 100:'#dbeafe', 500:'#3b82f6', 600:'#2563eb', 700:'#1d4ed8', 900:'#1e3a8a' } }
+      }
+    }
+  };
+</script>
+
+<style>
+  html, body { font-family: 'Cairo', sans-serif; }
+  body { background: linear-gradient(180deg, #f1f5f9 0%, #e2e8f0 100%); min-height: 100vh; }
+  .card { background: #fff; border-radius: 1rem; box-shadow: 0 1px 3px rgba(15,23,42,.08), 0 4px 14px rgba(15,23,42,.04); }
+  .pulse-dot { animation: pulse 1.6s infinite; }
+  @keyframes pulse { 0%{opacity:1; transform:scale(1)} 50%{opacity:.45; transform:scale(1.25)} 100%{opacity:1; transform:scale(1)} }
+  .spin { animation: spin 0.9s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .fade-in { animation: fadeIn .35s ease both; }
+  @keyframes fadeIn { from { opacity:0; transform: translateY(6px);} to { opacity:1; transform:none; } }
+  tbody tr:hover { background: #f8fafc; }
+  .table-wrap { max-height: 65vh; overflow: auto; }
+  thead th { position: sticky; top: 0; z-index: 5; }
+  .table-wrap::-webkit-scrollbar { height: 8px; width: 8px; }
+  .table-wrap::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 8px; }
+  .ltr-num { direction: ltr; unicode-bidi: plaintext; display: inline-block; }
+</style>
 </head>
-<body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col">
 
-  <!-- Header -->
-  <header class="bg-white border-b border-slate-200 sticky top-0 z-30 shadow-sm">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 py-3.5 flex flex-col sm:flex-row items-center justify-between gap-3">
-      <div class="flex items-center gap-3">
-        <div class="w-10 h-10 rounded-xl bg-blue-600 text-white flex items-center justify-center text-lg shadow-sm">
-          <i class="fa-solid fa-notes-medical"></i>
-        </div>
-        <div>
-          <h1 class="text-base sm:text-lg font-bold text-slate-900 leading-tight">سجل متابعة طلبات التأمين</h1>
-          <p class="text-xs text-slate-500">مدينة الملك سلمان الطبية (KSAMC) • مزامنة تلقائية مع قوقل شيت</p>
-        </div>
+<body class="text-slate-800">
+
+<!-- ===================== الترويسة ===================== -->
+<header class="bg-gradient-to-l from-brand-900 via-brand-700 to-brand-600 text-white shadow-lg">
+  <div class="max-w-7xl mx-auto px-4 py-5 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+    <div class="flex items-center gap-4">
+      <div class="w-14 h-14 rounded-2xl bg-white/15 flex items-center justify-center text-3xl shadow-inner">
+        <i class="fa-solid fa-hospital-user"></i>
       </div>
-
-      <div class="flex items-center gap-2">
-        <span id="syncBadge" class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
-          <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-          مباشر ومحدث
-        </span>
-        <button onclick="fetchSheetData()" class="flex items-center gap-2 px-3.5 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold transition shadow-sm">
-          <i id="syncIcon" class="fa-solid fa-arrows-rotate"></i>
-          <span>تحديث البيانات</span>
-        </button>
-      </div>
-    </div>
-  </header>
-
-  <!-- Main Content -->
-  <main class="max-w-7xl mx-auto px-4 sm:px-6 py-6 space-y-5 flex-1 w-full">
-
-    <!-- KPI Cards -->
-    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-      <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
-        <div>
-          <p class="text-xs font-semibold text-slate-400">إجمالي الطلبات</p>
-          <h3 id="statTotal" class="text-2xl font-bold text-slate-800 mt-0.5">0</h3>
-        </div>
-        <div class="w-10 h-10 rounded-xl bg-slate-100 text-slate-600 flex items-center justify-center text-base">
-          <i class="fa-solid fa-list-check"></i>
-        </div>
-      </div>
-
-      <div class="bg-white p-4 rounded-2xl border border-amber-200 shadow-sm flex items-center justify-between">
-        <div>
-          <p class="text-xs font-semibold text-amber-600">تحت الإجراء</p>
-          <h3 id="statPending" class="text-2xl font-bold text-amber-600 mt-0.5">0</h3>
-        </div>
-        <div class="w-10 h-10 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center text-base">
-          <i class="fa-solid fa-clock-rotate-left"></i>
-        </div>
-      </div>
-
-      <div class="bg-white p-4 rounded-2xl border border-emerald-200 shadow-sm flex items-center justify-between">
-        <div>
-          <p class="text-xs font-semibold text-emerald-600">تم الإنجاز</p>
-          <h3 id="statCompleted" class="text-2xl font-bold text-emerald-600 mt-0.5">0</h3>
-        </div>
-        <div class="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-base">
-          <i class="fa-solid fa-circle-check"></i>
-        </div>
+      <div>
+        <h1 class="text-xl md:text-2xl font-extrabold leading-tight">لوحة متابعة طلبات التأمين الطبي</h1>
+        <p class="text-sm text-blue-100 font-medium">مدينة الملك سلمان الطبية — KSAMC</p>
       </div>
     </div>
 
-    <!-- Filters & Search Bar -->
-    <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
-      <div class="relative flex-1 max-w-md">
-        <i class="fa-solid fa-magnifying-glass absolute right-3.5 top-3 text-slate-400 text-sm"></i>
-        <input 
-          id="searchInput" 
-          type="text" 
-          placeholder="بحث سريع (الاسم، رقم الملف، الجوال، المطلوب...)" 
-          class="w-full pl-4 pr-10 py-
+    <div class="flex items-center gap-3 flex-wrap">
+      <div id="connBadge" class="flex items-center gap-2 bg-white/15 rounded-full px-4 py-2 text-sm font-semibold">
+        <span id="connDot" class="w-2.5 h-2.5 rounded-full bg-amber-300 pulse-dot"></span>
+        <span id="connText">جارٍ الاتصال...</span>
+      </div>
+      <div class="text-xs text-blue-100 hidden sm:block">
+        آخر تحديث: <span id="lastUpdate" class="font-bold">—</span>
+      </div>
+      <button id="refreshBtn" class="bg-white text-brand-700 hover:bg-blue-50 transition rounded-full px-4 py-2 text-sm font-bold flex items-center gap-2 shadow">
+        <i id="refreshIcon" class="fa-solid fa-rotate"></i>
+        <span>تحديث</span>
+      </button>
+    </div>
+  </div>
+</header>
+
+<main class="max-w-7xl mx-auto px-4 py-6 space-y-6">
+
+  <!-- تنبيه الحالة -->
+  <div id="notice" class="hidden card border-r-4 border-amber-400 p-4 text-sm text-amber-800 bg-amber-50 fade-in"></div>
+
+  <!-- ===================== بطاقات الإحصائيات ===================== -->
+  <section class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+    <div class="card p-5 flex items-center gap-4 fade-in">
+      <div class="w-14 h-14 rounded-2xl bg-blue-100 text-blue-600 flex items-center justify-center text-2xl">
+        <i class="fa-solid fa-folder-open"></i>
+      </div>
+      <div>
+        <div class="text-sm text-slate-500 font-semibold">إجمالي السجلات</div>
+        <div id="kpiTotal" class="text-3xl font-extrabold text-slate-800">0</div>
+      </div>
+    </div>
+
+    <div class="card p-5 flex items-center gap-4 fade-in">
+      <div class="w-14 h-14 rounded-2xl bg-amber-100 text-amber-600 flex items-center justify-center text-2xl">
+        <i class="fa-solid fa-hourglass-half"></i>
+      </div>
+      <div>
+        <div class="text-sm text-slate-500 font-semibold">تحت الإجراء</div>
+        <div id="kpiPending" class="text-3xl font-extrabold text-amber-600">0</div>
+      </div>
+    </div>
+
+    <div class="card p-5 flex items-center gap-4 fade-in">
+      <div class="w-14 h-14 rounded-2xl bg-emerald-100 text-emerald-600 flex items-center justify-center text-2xl">
+        <i class="fa-solid fa-circle-check"></i>
+      </div>
+      <div>
+        <div class="text-sm text-slate-500 font-semibold">تم الإنجاز</div>
+        <div id="kpiDone" class="text-3xl font-extrabold text-emerald-600">0</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== البحث والتصفية ===================== -->
+  <section class="card p-4 flex flex-col md:flex-row gap-3 md:items-center md:justify-between">
+    <div class="relative w-full md:max-w-md">
+      <i class="fa-solid fa-magnifying-glass absolute right-4 top-1/2 -translate-y-1/2 text-slate-400"></i>
+      <input id="searchInput" type="search" autocomplete="off"
+             placeholder="ابحث بالاسم أو رقم الملف أو المستندات أو الملاحظات..."
+             class="w-full bg-slate-50 border border-slate-200 rounded-xl py-2.5 pr-11 pl-4 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:bg-white transition">
+    </div>
+
+    <div id="filterBtns" class="flex items-center gap-2 flex-wrap">
+      <button data-filter="all" class="filter-btn px-4 py-2 rounded-xl text-sm font-bold transition">
+        الكل <span id="cntAll" class="mr-1 text-xs opacity-80">0</span>
+      </button>
+      <button data-filter="pending" class="filter-btn px-4 py-2 rounded-xl text-sm font-bold transition">
+        تحت الإجراء <span id="cntPending" class="mr-1 text-xs opacity-80">0</span>
+      </button>
+      <button data-filter="done" class="filter-btn px-4 py-2 rounded-xl text-sm font-bold transition">
+        تم الإنجاز <span id="cntDone" class="mr-1 text-xs opacity-80">0</span>
+      </button>
+    </div>
+  </section>
+
+  <!-- ===================== الجدول ===================== -->
+  <section class="card overflow-hidden">
+    <div class="table-wrap">
+      <table class="w-full text-sm text-right">
+        <thead>
+          <tr class="bg-slate-800 text-white">
+            <th class="px-4 py-3 font-bold w-12">#</th>
+            <th class="px-4 py-3 font-bold">اسم المريض</th>
+            <th class="px-4 py-3 font-bold">رقم الملف الطبي (MRN)</th>
+            <th class="px-4 py-3 font-bold">المستندات / المطلوب</th>
+            <th class="px-4 py-3 font-bold">حالة الطلب</th>
+            <th class="px-4 py-3 font-bold text-center">واتساب</th>
+            <th class="px-4 py-3 font-bold">الملاحظات</th>
+          </tr>
+        </thead>
+        <tbody id="tbody" class="divide-y divide-slate-100"></tbody>
+      </table>
+    </div>
+
+    <div id="emptyState" class="hidden py-16 text-center text-slate-400">
+      <i class="fa-regular fa-folder-open text-5xl mb-3"></i>
+      <p class="font-semibold">لا توجد نتائج مطابقة</p>
+    </div>
+
+    <div id="loadingState" class="py-16 text-center text-slate-400">
+      <i class="fa-solid fa-circle-notch spin text-4xl mb-3"></i>
+      <p class="font-semibold">جارٍ تحميل البيانات...</p>
+    </div>
+
+    <div class="px-4 py-3 bg-slate-50 border-t border-slate-100 text-xs text-slate-500 flex flex-wrap items-center justify-between gap-2">
+      <span>يعرض <b id="shownCount">0</b> من <b id="totalCount">0</b> سجل</span>
+      <span><i class="fa-solid fa-clock-rotate-left ml-1"></i> يتم التحديث تلقائياً كل 60 ثانية</span>
+    </div>
+  </section>
+
+  <footer class="text-center text-xs text-slate-400 pb-6">
+    لوحة متابعة التأمين الطبي — مدينة الملك سلمان الطبية (KSAMC)
+  </footer>
+</main>
+
+<script>
+/* =====================================================================
+   الإعدادات
+   ===================================================================== */
+const CONFIG = {
+  SPREADSHEET_ID: '135L6yG_lk5HPj77mZbUqv3-oZNWWd4T5N6yR6hX3Wk0',
+  SHEET_NAME: '',            // اتركه فارغاً لأول ورقة، أو اكتب اسم الورقة بدقة
+  SHEET_GID: '',             // بديل: رقم gid للورقة (اختياري)
+  REFRESH_MS: 60000,         // 60 ثانية
+  COUNTRY_CODE: '966',
+  HOSPITAL_NAME: 'مدينة الملك سلمان الطبية'
+};
+
+/* بيانات توضيحية تظهر عند تعذّر الاتصال */
+const DEMO_DATA = [
+  { name: 'محمد عبدالله القحطاني', mrn: '1048231', docs: 'صورة بطاقة التأمين + تقرير طبي', status: 'تحت الإجراء', phone: '0501234567', notes: 'بانتظار موافقة شركة التأمين' },
+  { name: 'فاطمة سعد الحربي',     mrn: '1048976', docs: 'نتائج الفحوصات المخبرية',        status: 'تم الإنجاز',  phone: '0559876543', notes: 'تمت الموافقة' },
+  { name: 'خالد إبراهيم العتيبي', mrn: '1049012', docs: 'تقرير الأشعة + خطاب التحويل',    status: 'تحت الإجراء', phone: '966541112233', notes: 'مطلوب استكمال التقرير' },
+  { name: 'نورة علي الشهري',      mrn: '1049457', docs: 'صورة الهوية الوطنية',            status: 'تم الإنجاز',  phone: '0533344556', notes: '' },
+  { name: 'عبدالرحمن يوسف الزهراني', mrn: '1050123', docs: 'نموذج الموافقة المسبقة',      status: 'تحت الإجراء', phone: '',           notes: 'لا يوجد رقم جوال مسجل' }
+];
+
+/* =====================================================================
+   الحالة العامة
+   ===================================================================== */
+let allRows = [];
+let activeFilter = 'all';
+let searchTerm = '';
+let isDemo = false;
+let isFetching = false;
+
+const $ = (id) => document.getElementById(id);
+
+/* =====================================================================
+   أدوات مساعدة
+   ===================================================================== */
+function escapeHtml(str) {
+  return String(str ?? '').replace(/[&<>"']/g, (c) => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+  }[c]));
+}
+
+function arabicToEnglishDigits(str) {
+  return String(str ?? '')
+    .replace(/[٠-٩]/g, (d) => '٠١٢٣٤٥٦٧٨٩'.indexOf(d))
+    .replace(/[۰-۹]/g, (d) => '۰۱۲۳۴۵۶۷۸۹'.indexOf(d));
+}
+
+function normalizeText(str) {
+  return arabicToEnglishDigits(String(str ?? ''))
+    .toLowerCase()
+    .replace(/[\u064B-\u065F\u0670\u0640]/g, '')  // التشكيل والتطويل
+    .replace(/[أإآ]/g, 'ا')
+    .replace(/ى/g, 'ي')
+    .replace(/ة/g, 'ه')
+    .trim();
+}
+
+/* تنسيق رقم الجوال إلى الصيغة الدولية (966XXXXXXXXX) */
+function formatPhone(raw) {
+  if (!raw) return '';
+  let d = arabicToEnglishDigits(String(raw)).replace(/\D/g, '');
+  if (!d) return '';
+  if (d.startsWith('00')) d = d.slice(2);
+  if (d.startsWith('966')) {
+    d = d.slice(3);
+    if (d.startsWith('0')) d = d.slice(1);
+    return d.length === 9 ? '966' + d : '';
+  }
+  if (d.startsWith('05') && d.length === 10) return '966' + d.slice(1);
+  if (d.startsWith('5') && d.length === 9) return '966' + d;
+  // أرقام دولية أخرى (10-15 خانة) تُترك كما هي
+  if (d.length >= 10 && d.length <= 15 && !d.startsWith('0')) return d;
+  return '';
+}
+
+/* استخراج رقم جوال من نص قد يحتوي على أكثر من رقم */
+function extractPhone(raw) {
+  if (!raw) return '';
+  const parts = String(raw).split(/[\/،,;\n]+/);
+  for (const p of parts) {
+    const f = formatPhone(p);
+    if (f) return f;
+  }
+  return formatPhone(raw);
+}
+
+/* تصنيف الحالة */
+function classifyStatus(text) {
+  const t = normalizeText(text);
+  if (!t) return 'pending';
+  const doneWords = ['انجاز', 'منجز', 'مكتمل', 'اكتمل', 'تم', 'موافق', 'معتمد', 'مقبول', 'done', 'complete', 'approved', 'closed', 'مغلق'];
+  const notDone = ['تحت الاجراء', 'قيد', 'جاري', 'جاريه', 'لم يتم', 'غير', 'معلق', 'منتظر', 'انتظار', 'pending', 'process', 'open'];
+  if (notDone.some((w) => t.includes(w))) return 'pending';
+  if (doneWords.some((w) => t.includes(w))) return 'done';
+  return 'pending';
+}
+
+function buildWhatsAppLink(row) {
+  const phone = row.phoneIntl;
+  if (!phone) return '';
+  const msg =
+`السلام عليكم ورحمة الله وبركاته،
+
+نفيدكم بأننا من قسم التأمين الطبي في ${CONFIG.HOSPITAL_NAME}.
+
+بخصوص المريض: ${row.name || '—'}
+رقم الملف الطبي: ${row.mrn || '—'}
+المستندات المطلوبة: ${row.docs || 'يرجى مراجعة قسم التأمين الطبي'}
+
+نأمل التكرم بتزويدنا بما ذُكر أعلاه لاستكمال إجراءات التأمين الطبي في أقرب وقت ممكن.
+
+شاكرين لكم حسن تعاونكم،
+قسم التأمين الطبي — ${CONFIG.HOSPITAL_NAME}`;
+  return `https://wa.me/${phone}?text=${encodeURIComponent(msg)}`;
+}
+
+/* =====================================================================
+   جلب البيانات
+   ===================================================================== */
+function buildUrls() {
+  const id = CONFIG.SPREADSHEET_ID;
+  const bust = '&_=' + Date.now();
+  let sel = '';
+  if (CONFIG.SHEET_NAME) sel = '&sheet=' + encodeURIComponent(CONFIG.SHEET_NAME);
+  else if (CONFIG.SHEET_GID) sel = '&gid=' + encodeURIComponent(CONFIG.SHEET_GID);
+
+  return [
+    `https://docs.google.com/spreadsheets/d/${id}/gviz/tq?tqx=out:csv${sel}${bust}`,
+    `https://docs.google.com/spreadsheets/d/${id}/export?format=csv${CONFIG.SHEET_GID ? '&gid=' + encodeURIComponent(CONFIG.SHEET_GID) : ''}${bust}`
+  ];
+}
+
+async function fetchCsvText() {
+  const urls = buildUrls();
+  let lastErr = null;
+  for (const url of urls) {
+    try {
+      const ctrl = new AbortController();
+      const timer = setTimeout(() => ctrl.abort(), 15000);
+      const res = await fetch(url, { cache: 'no-store', signal: ctrl.signal });
+      clearTimeout(timer);
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      const text = await res.text();
+      // إذا أعادت قوقل صفحة HTML (تسجيل دخول) فالشيت غير مشارك للعامة
+      if (/^\s*<(!doctype|html)/i.test(text)) throw new Error('الشيت غير متاح للعامة');
+      return text;
+    } catch (e) {
+      lastErr = e;
+    }
+  }
+  throw lastErr || new Error('تعذّر الجلب');
+}
+
+/* =====================================================================
+   تحليل CSV وربط الأعمدة
+   ===================================================================== */
+const COLUMN_KEYS = {
+  name:   ['اسم المريض', 'اسم', 'المريض', 'patient', 'name'],
+  mrn:    ['mrn', 'الملف الطبي', 'رقم الملف', 'ملف', 'file'],
+  docs:   ['المستندات', 'مستندات', 'المطلوب', 'المستند', 'documents', 'required'],
+  status: ['حالة الطلب', 'الحالة', 'حاله', 'status'],
+  phone:  ['الجوال', 'جوال', 'الهاتف', 'هاتف', 'موبايل', 'واتس', 'mobile', 'phone', 'whatsapp'],
+  notes:  ['الملاحظات', 'ملاحظات', 'ملاحظه', 'notes', 'note', 'remark']
+};
+
+function detectColumns(headerRow) {
+  const map = {};
+  const used = new Set();
+  const heads = headerRow.map((h) => normalizeText(h));
+
+  // الأولوية للتطابق الأكثر تحديداً (مرتب كما في الكائن)
+  const order = ['mrn', 'phone', 'status', 'docs', 'notes', 'name'];
+  for (const key of order) {
+    for (let i = 0; i < heads.length; i++) {
+      if (used.has(i) || !heads[i]) continue;
+      if (COLUMN_KEYS[key].some((k) => heads[i].includes(normalizeText(k)))) {
+        map[key] = i;
+        used.add(i);
+        break;
+      }
+    }
+  }
+  return map;
+}
+
+function parseSheet(csvText) {
+  const parsed = Papa.parse(csvText, { skipEmptyLines: 'greedy' });
+  const rows = parsed.data;
+  if (!rows || !rows.length) return [];
+
+  // البحث عن صف العناوين ضمن أول 6 صفوف
+  let headerIdx = -1, map = {};
+  for (let i = 0; i < Math.min(6, rows.length); i++) {
+    const m = detectColumns(rows[i]);
+    if (Object.keys(m).length >= 3) { headerIdx = i; map = m; break; }
+  }
+
+  // في حال عدم التعرف على العناوين: ترتيب افتراضي حسب الأعمدة المطلوبة
+  if (headerIdx === -1) {
+    headerIdx = 0;
+    map = { name: 1, mrn: 2, docs: 3, status: 4, phone: 5, notes: 6 };
+    const first = rows[0] || [];
+    // إن كان العمود الأول ليس رقماً تسلسلياً، ازح الترتيب
+    if (first.length && first.length <= 6) map = { name: 0, mrn: 1, docs: 2, status: 3, phone: 4, notes: 5 };
+  }
+
+  const get = (r, key) => (map[key] !== undefined ? String(r[map[key]] ?? '').trim() : '');
+
+  const out = [];
+  for (let i = headerIdx + 1; i < rows.length; i++) {
+    const r = rows[i];
+    const rec = {
+      name: get(r, 'name'),
+      mrn: get(r, 'mrn'),
+      docs: get(r, 'docs'),
+      status: get(r, 'status'),
+      phone: get(r, 'phone'),
+      notes: get(r, 'notes')
+    };
+    // تجاهل الصفوف الفارغة تماماً
+    if (!rec.name && !rec.mrn && !rec.docs && !rec.status && !rec.phone && !rec.notes) continue;
+    out.push(rec);
+  }
+  return out;
+}
+
+function enrichRows(list) {
+  return list.map((r, i) => {
+    const phoneIntl = extractPhone(r.phone);
+    const statusKey = classifyStatus(r.status);
+    const row = {
+      idx: i + 1,
+      name: r.name,
+      mrn: arabicToEnglishDigits(r.mrn),
+      docs: r.docs,
+      statusText: r.status || (statusKey === 'done' ? 'تم الإنجاز' : 'تحت الإجراء'),
+      statusKey,
+      phoneRaw: r.phone,
+      phoneIntl,
+      notes: r.notes
+    };
+    row.waLink = buildWhatsAppLink(row);
+    row.searchBlob = normalizeText([row.name, row.mrn, row.docs, row.statusText, row.phoneRaw, row.notes].join(' '));
+    return row;
+  });
+}
+
+/* =====================================================================
+   الواجهة
+   ===================================================================== */
+function setConn(state, text) {
+  const dot = $('connDot');
+  dot.className = 'w-2.5 h-2.5 rounded-full pulse-dot ';
+  if (state === 'live') dot.className += 'bg-emerald-300';
+  else if (state === 'error') dot.className += 'bg-red-400';
+  else dot.className += 'bg-amber-300';
+  $('connText').textContent = text;
+}
+
+function showNotice(html) {
+  const n = $('notice');
+  if (!html) { n.classList.add('hidden'); n.innerHTML = ''; return; }
+  n.innerHTML = html;
+  n.classList.remove('hidden');
+}
+
+function updateKPIs() {
+  const total = allRows.length;
+  const done = allRows.filter((r) => r.statusKey === 'done').length;
+  const pending = total - done;
+  $('kpiTotal').textContent = total;
+  $('kpiPending').textContent = pending;
+  $('kpiDone').textContent = done;
+  $('cntAll').textContent = total;
+  $('cntPending').textContent = pending;
+  $('cntDone').textContent = done;
+  $('totalCount').textContent = total;
+}
+
+function updateFilterButtons() {
+  document.querySelectorAll('.filter-btn').forEach((btn) => {
+    const active = btn.dataset.filter === activeFilter;
+    btn.className = 'filter-btn px-4 py-2 rounded-xl text-sm font-bold transition ' +
+      (active
+        ? 'bg-brand-600 text-white shadow'
+        : 'bg-slate-100 text-slate-600 hover:bg-slate-200');
+  });
+}
+
+function statusBadge(row) {
+  if (row.statusKey === 'done') {
+    return `<span class="inline-flex items-center gap-1.5 bg-emerald-100 text-emerald-700 px-3 py-1 rounded-full text-xs font-bold">
+              <i class="fa-solid fa-circle-check"></i>${escapeHtml(row.statusText)}</span>`;
+  }
+  return `<span class="inline-flex items-center gap-1.5 bg-amber-100 text-amber-700 px-3 py-1 rounded-full text-xs font-bold">
+            <i class="fa-solid fa-hourglass-half"></i>${escapeHtml(row.statusText)}</span>`;
+}
+
+function waButton(row) {
+  if (row.waLink) {
+    return `<a href="${row.waLink}" target="_blank" rel="noopener noreferrer"
+               title="مراسلة ${escapeHtml(row.name)} عبر واتساب"
+               class="inline-flex items-center justify-center w-10 h-10 rounded-full bg-emerald-500 hover:bg-emerald-600 text-white shadow transition">
+               <i class="fa-brands fa-whatsapp text-xl"></i></a>`;
+  }
+  return `<span title="لا يوجد رقم جوال صالح"
+             class="inline-flex items-center justify-center w-10 h-10 rounded-full bg-slate-200 text-slate-400 cursor-not-allowed">
+             <i class="fa-brands fa-whatsapp text-xl"></i></span>`;
+}
+
+function getVisibleRows() {
+  const q = normalizeText(searchTerm);
+  return allRows.filter((r) => {
+    if (activeFilter !== 'all' && r.statusKey !== activeFilter) return false;
+    if (q && !r.searchBlob.includes(q)) return false;
+    return true;
+  });
+}
+
+function renderTable() {
+  const rows = getVisibleRows();
+  const tbody = $('tbody');
+
+  tbody.innerHTML = rows.map((r) => `
+    <tr class="transition">
+      <td class="px-4 py-3 text-slate-400 font-semibold">${r.idx}</td>
+      <td class="px-4 py-3 font-bold text-slate-800">${escapeHtml(r.name) || '<span class="text-slate-300">—</span>'}</td>
+      <td class="px-4 py-3"><span class="ltr-num font-semibold text-slate-700 bg-slate-100 px-2 py-0.5 rounded">${escapeHtml(r.mrn) || '—'}</span></td>
+      <td class="px-4 py-3 text-slate-600 max-w-xs">${escapeHtml(r.docs) || '<span class="text-slate-300">—</span>'}</td>
+      <td class="px-4 py-3">${statusBadge(r)}</td>
+      <td class="px-4 py-3 text-center">${waButton(r)}</td>
+      <td class="px-4 py-3 text-slate-500 max-w-xs">${escapeHtml(r.notes) || '<span class="text-slate-300">—</span>'}</td>
+    </tr>
+  `).join('');
+
+  $('shownCount').textContent = rows.length;
+  $('emptyState').classList.toggle('hidden', rows.length > 0 || allRows.length === 0 && !$('loadingState').classList.contains('hidden'));
+  if (rows.length === 0 && $('loadingState').classList.contains('hidden')) $('emptyState').classList.remove('hidden');
+  else if (rows.length > 0) $('emptyState').classList.add('hidden');
+}
+
+function renderAll() {
+  updateKPIs();
+  updateFilterButtons();
+  renderTable();
+}
+
+function stamp() {
+  const now = new Date();
+  $('lastUpdate').textContent = now.toLocaleTimeString('ar-SA', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+}
+
+/* =====================================================================
+   دورة التحميل
+   ===================================================================== */
+async function loadData(manual = false) {
+  if (isFetching) return;
+  isFetching = true;
+  $('refreshIcon').classList.add('spin');
+  if (manual || !allRows.length) setConn('loading', 'جارٍ التحديث...');
+
+  try {
+    const csv = await fetchCsvText();
+    const list = parseSheet(csv);
+    allRows = enrichRows(list);
+    isDemo = false;
+    showNotice('');
+    setConn('live', 'متصل مباشرة');
+  } catch (err) {
+    console.warn('Sheet fetch failed:', err);
+    if (!allRows.length || isDemo) {
+      allRows = enrichRows(DEMO_DATA);
+      isDemo = true;
+    }
+    setConn('error', isDemo ? 'غير متصل — بيانات توضيحية' : 'تعذّر التحديث');
+    showNotice(
+      `<div class="flex items-start gap-3">
+         <i class="fa-solid fa-triangle-exclamation mt-1"></i>
+         <div>
+           <b>تعذّر الاتصال بقوقل شيت.</b>
+           ${isDemo ? 'يتم عرض بيانات توضيحية مؤقتاً.' : 'يتم عرض آخر بيانات تم تحميلها.'}
+           <div class="text-xs mt-1 opacity-90">
+             تأكد من أن الشيت مشارك بصلاحية «أي شخص لديه الرابط – عارض»، ومن اتصال الإنترنت. ستتم إعادة المحاولة تلقائياً.
+           </div>
+         </div>
+       </div>`
+    );
+  } finally {
+    $('loadingState').classList.add('hidden');
+    $('refreshIcon').classList.remove('spin');
+    stamp();
+    renderAll();
+    isFetching = false;
+  }
+}
+
+/* =====================================================================
+   الأحداث
+   ===================================================================== */
+$('searchInput').addEventListener('input', (e) => {
+  searchTerm = e.target.value;
+  renderTable();
+});
+
+$('filterBtns').addEventListener('click', (e) => {
+  const btn = e.target.closest('.filter-btn');
+  if (!btn) return;
+  activeFilter = btn.dataset.filter;
+  updateFilterButtons();
+  renderTable();
+});
+
+$('refreshBtn').addEventListener('click', () => loadData(true));
+
+document.addEventListener('visibilitychange', () => {
+  if (!document.hidden) loadData();
+});
+
+window.addEventListener('online', () => loadData(true));
+
+/* بدء التشغيل */
+updateFilterButtons();
+loadData();
+setInterval(() => { if (!document.hidden) loadData(); }, CONFIG.REFRESH_MS);
+</script>
+</body>
+</html>
