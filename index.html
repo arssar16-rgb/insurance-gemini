@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>سجل متابعة طلبات التأمين - مدينة الملك سلمان الطبية</title>
+  <title>لوحة متابعة طلبات التأمين - مدينة الملك سلمان الطبية</title>
   
   <!-- Tailwind CSS & FontAwesome -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -12,7 +12,6 @@
 
   <style>
     body { font-family: 'Cairo', sans-serif; }
-    /* تخصيص شريط التمرير */
     ::-webkit-scrollbar { width: 6px; height: 6px; }
     ::-webkit-scrollbar-track { background: #f1f5f9; }
     ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
@@ -35,13 +34,13 @@
       </div>
 
       <div class="flex items-center gap-2">
-        <span id="syncBadge" class="hidden sm:inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+        <span id="syncBadge" class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
           <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-          متصل ومحدث
+          مباشر ومحدث
         </span>
         <button onclick="fetchSheetData()" class="flex items-center gap-2 px-3.5 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold transition shadow-sm">
           <i id="syncIcon" class="fa-solid fa-arrows-rotate"></i>
-          <span>تحديث يدوي</span>
+          <span>تحديث البيانات</span>
         </button>
       </div>
     </div>
@@ -91,254 +90,4 @@
           id="searchInput" 
           type="text" 
           placeholder="بحث سريع (الاسم، رقم الملف، الجوال، المطلوب...)" 
-          class="w-full pl-4 pr-10 py-2 rounded-xl bg-slate-50 border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white"
-          oninput="applyFilter()"
-        >
-      </div>
-
-      <div class="flex items-center gap-1.5 overflow-x-auto pb-1 md:pb-0">
-        <button onclick="setFilterStatus('all')" id="btn-all" class="status-tab px-3 py-1.5 rounded-lg text-xs font-bold bg-blue-600 text-white transition">الكل</button>
-        <button onclick="setFilterStatus('تحت الإجراء')" id="btn-pending" class="status-tab px-3 py-1.5 rounded-lg text-xs font-bold bg-slate-100 text-slate-600 hover:bg-slate-200 transition">تحت الإجراء</button>
-        <button onclick="setFilterStatus('تم الإنجاز')" id="btn-completed" class="status-tab px-3 py-1.5 rounded-lg text-xs font-bold bg-slate-100 text-slate-600 hover:bg-slate-200 transition">تم الإنجاز</button>
-      </div>
-    </div>
-
-    <!-- Table Container -->
-    <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-      <div class="overflow-x-auto">
-        <table class="w-full text-right border-collapse min-w-[700px]">
-          <thead>
-            <tr id="tableHeader" class="bg-slate-100/70 border-b border-slate-200 text-slate-600 text-xs font-bold tracking-wider">
-              <!-- رؤوس الأعمدة تتولد ديناميكياً من الشيت -->
-            </tr>
-          </thead>
-          <tbody id="tableBody" class="divide-y divide-slate-100 text-xs sm:text-sm">
-            <tr>
-              <td colspan="100%" class="text-center py-12 text-slate-400">
-                <i class="fa-solid fa-spinner fa-spin text-2xl text-blue-600 mb-2"></i>
-                <p>جارٍ سحب البيانات المباشرة من الشيت...</p>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
-
-    <!-- Status Bar -->
-    <div class="flex flex-col sm:flex-row items-center justify-between text-xs text-slate-400 gap-2 px-1">
-      <div>
-        <span>عدد النتائج المعروضة: </span>
-        <span id="filteredCount" class="font-bold text-slate-600">0</span>
-      </div>
-      <div>
-        <span>تحديث تلقائي مستمر • آخر تحديث: </span>
-        <span id="lastUpdated" class="font-medium text-slate-500">-</span>
-      </div>
-    </div>
-
-  </main>
-
-  <script>
-    // معرف قوقل شيت المعتمد
-    const SPREADSHEET_ID = "135L6yG_lk5HPj77mZbUqv3-oZNWWd4T5N6yR6hX3Wk0";
-    
-    let allRows = [];
-    let headers = [];
-    let activeFilter = 'all';
-
-    // استخدام Google Visualization API لجلب البيانات كـ JSON دون الحاجة لأي خادم وسيط
-    async function fetchSheetData() {
-      const syncIcon = document.getElementById('syncIcon');
-      syncIcon.classList.add('fa-spin');
-
-      // الرابط العام لقراءة الشيت كـ JSON
-      const gvizUrl = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?tqx=out:json`;
-
-      try {
-        const response = await fetch(gvizUrl);
-        const text = await response.text();
-        
-        // تنظيف استجابة Google Visualization من دالة التغليف /*O_o*/ google.visualization.Query.setResponse(...)
-        const jsonString = text.substring(text.indexOf('{'), text.lastIndexOf('}') + 1);
-        const json = JSON.parse(jsonString);
-
-        if (!json.table || !json.table.cols || !json.table.rows) {
-          throw new Error("تنسيق البيانات غير صحيح");
-        }
-
-        // استخراج العناوين
-        headers = json.table.cols
-          .map(col => (col.label || '').trim())
-          .filter(label => label !== '');
-
-        // استخراج الصفوف
-        allRows = json.table.rows.map(row => {
-          const rowObj = {};
-          headers.forEach((h, idx) => {
-            const cell = row.c ? row.c[idx] : null;
-            rowObj[h] = cell ? (cell.f ? cell.f : (cell.v !== null ? cell.v : '')) : '';
-          });
-          return rowObj;
-        });
-
-        // استبعاد الصفوف الفارغة بالكامل
-        allRows = allRows.filter(r => Object.values(r).some(v => String(v).trim() !== ''));
-
-        renderHeader();
-        updateStats();
-        applyFilter();
-
-        document.getElementById('lastUpdated').textContent = new Date().toLocaleTimeString('ar-SA', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-      } catch (err) {
-        console.error("فشل جلب بيانات الشيت:", err);
-        document.getElementById('tableBody').innerHTML = `
-          <tr>
-            <td colspan="100%" class="text-center py-10 text-rose-500">
-              <i class="fa-solid fa-triangle-exclamation text-2xl mb-2"></i>
-              <p class="font-bold">تعذر الاتصال بملف قوقل شيت تلقائياً.</p>
-              <p class="text-xs text-slate-500 mt-1">تأكد من إمكانية الوصول إلى الملف (أي شخص لديه الرابط يمكنه العرض) في خيارات المشاركة بقوقل درايف.</p>
-            </td>
-          </tr>
-        `;
-      } finally {
-        syncIcon.classList.remove('fa-spin');
-      }
-    }
-
-    function renderHeader() {
-      const thead = document.getElementById('tableHeader');
-      thead.innerHTML = '';
-      headers.forEach(h => {
-        const th = document.createElement('th');
-        th.className = 'py-3.5 px-4 font-bold';
-        th.textContent = h;
-        thead.appendChild(th);
-      });
-      // عمود إضافي للإجراءات (مثل إرسال وتساب سريع) إذا كان هناك رقم جوال
-      const actionTh = document.createElement('th');
-      actionTh.className = 'py-3.5 px-4 font-bold text-center';
-      actionTh.textContent = 'إجراء سريع';
-      thead.appendChild(actionTh);
-    }
-
-    function applyFilter() {
-      const search = document.getElementById('searchInput').value.trim().toLowerCase();
-
-      const filtered = allRows.filter(row => {
-        // فحص البحث
-        const matchesSearch = Object.values(row).some(val => 
-          String(val).toLowerCase().includes(search)
-        );
-
-        // فحص الحالة
-        let matchesStatus = true;
-        if (activeFilter !== 'all') {
-          const statusKey = headers.find(h => h.includes('حالة') || h.toLowerCase().includes('status'));
-          if (statusKey) {
-            matchesStatus = String(row[statusKey]).trim() === activeFilter;
-          }
-        }
-
-        return matchesSearch && matchesStatus;
-      });
-
-      renderBody(filtered);
-      document.getElementById('filteredCount').textContent = filtered.length;
-    }
-
-    function renderBody(rows) {
-      const tbody = document.getElementById('tableBody');
-      tbody.innerHTML = '';
-
-      if (rows.length === 0) {
-        tbody.innerHTML = `
-          <tr>
-            <td colspan="100%" class="text-center py-10 text-slate-400">
-              <i class="fa-regular fa-folder-open text-2xl mb-2 text-slate-300"></i>
-              <p>لا توجد بيانات مطابقة لخيارات البحث أو الفلترة الحالية.</p>
-            </td>
-          </tr>
-        `;
-        return;
-      }
-
-      rows.forEach(row => {
-        const tr = document.createElement('tr');
-        tr.className = 'hover:bg-slate-50/80 transition';
-
-        headers.forEach(h => {
-          const td = document.createElement('td');
-          td.className = 'py-3 px-4 text-slate-700 whitespace-nowrap';
-          const val = String(row[h] || '').trim();
-
-          // تمييز شارات الحالة
-          if (val === 'تم الإنجاز') {
-            td.innerHTML = `<span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800"><i class="fa-solid fa-check text-[10px]"></i> تم الإنجاز</span>`;
-          } else if (val === 'تحت الإجراء') {
-            td.innerHTML = `<span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-100 text-amber-800"><i class="fa-solid fa-clock text-[10px]"></i> تحت الإجراء</span>`;
-          } else {
-            td.textContent = val !== '' ? val : '-';
-          }
-          tr.appendChild(td);
-        });
-
-        // زر الواتساب إن وُجد رقم هاتف
-        const actionTd = document.createElement('td');
-        actionTd.className = 'py-3 px-4 text-center whitespace-nowrap';
-        const mobileKey = headers.find(h => h.includes('جوال') || h.includes('هاتف') || h.toLowerCase().includes('phone') || h.toLowerCase().includes('mobile'));
-        const mobile = mobileKey ? String(row[mobileKey]).trim().replace(/[^0-9]/g, '') : '';
-
-        if (mobile && mobile.length >= 9) {
-          let cleanPhone = mobile;
-          if (cleanPhone.startsWith('05')) {
-            cleanPhone = '966' + cleanPhone.substring(1);
-          } else if (cleanPhone.startsWith('5')) {
-            cleanPhone = '966' + cleanPhone;
-          }
-          actionTd.innerHTML = `
-            <a href="https://wa.me/${cleanPhone}" target="_blank" class="inline-flex items-center justify-center w-7 h-7 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-white text-xs transition shadow-sm" title="فتح محادثة واتساب">
-              <i class="fa-brands fa-whatsapp"></i>
-            </a>
-          `;
-        } else {
-          actionTd.innerHTML = `<span class="text-slate-300">-</span>`;
-        }
-        tr.appendChild(actionTd);
-
-        tbody.appendChild(tr);
-      });
-    }
-
-    function setFilterStatus(status) {
-      activeFilter = status;
-      document.querySelectorAll('.status-tab').forEach(b => {
-        b.className = 'status-tab px-3 py-1.5 rounded-lg text-xs font-bold bg-slate-100 text-slate-600 hover:bg-slate-200 transition';
-      });
-
-      if (status === 'all') document.getElementById('btn-all').className = 'status-tab px-3 py-1.5 rounded-lg text-xs font-bold bg-blue-600 text-white transition';
-      if (status === 'تحت الإجراء') document.getElementById('btn-pending').className = 'status-tab px-3 py-1.5 rounded-lg text-xs font-bold bg-amber-600 text-white transition';
-      if (status === 'تم الإنجاز') document.getElementById('btn-completed').className = 'status-tab px-3 py-1.5 rounded-lg text-xs font-bold bg-emerald-600 text-white transition';
-
-      applyFilter();
-    }
-
-    function updateStats() {
-      document.getElementById('statTotal').textContent = allRows.length;
-      const statusKey = headers.find(h => h.includes('حالة') || h.toLowerCase().includes('status'));
-
-      if (statusKey) {
-        const pending = allRows.filter(r => String(r[statusKey]).trim() === 'تحت الإجراء').length;
-        const completed = allRows.filter(r => String(r[statusKey]).trim() === 'تم الإنجاز').length;
-        document.getElementById('statPending').textContent = pending;
-        document.getElementById('statCompleted').textContent = completed;
-      }
-    }
-
-    // جلب البيانات فور فتح الصفحة
-    fetchSheetData();
-
-    // تحديث تلقائي دوري كل 60 ثانية
-    setInterval(fetchSheetData, 60000);
-  </script>
-</body>
-</html>
+          class="w-full pl-4 pr-10 py-
