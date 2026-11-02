@@ -17,7 +17,6 @@
     }
   };
 </script>
-<!-- تطبيق الثيم قبل رسم الصفحة لتجنب الوميض -->
 <script>
   (function () {
     try {
@@ -38,25 +37,26 @@
   html, body { font-family: 'Cairo', sans-serif; }
   body { background: linear-gradient(180deg, #f1f5f9 0%, #e2e8f0 100%); min-height: 100vh; transition: background .25s; }
   .dark body { background: linear-gradient(180deg, #0f172a 0%, #020617 100%); }
-  .card { background: #fff; border-radius: 1rem; box-shadow: 0 1px 3px rgba(15,23,42,.08), 0 4px 14px rgba(15,23,42,.04); transition: background .25s; }
-  .dark .card { background: #1e293b; box-shadow: 0 1px 3px rgba(0,0,0,.4), 0 4px 14px rgba(0,0,0,.25); }
+  .panel { background: #fff; border-radius: 1rem; box-shadow: 0 1px 3px rgba(15,23,42,.08), 0 4px 14px rgba(15,23,42,.04); }
+  .dark .panel { background: #1e293b; box-shadow: 0 1px 3px rgba(0,0,0,.4), 0 4px 14px rgba(0,0,0,.25); }
   .pulse-dot { animation: pulse 1.6s infinite; }
   @keyframes pulse { 0%{opacity:1; transform:scale(1)} 50%{opacity:.45; transform:scale(1.25)} 100%{opacity:1; transform:scale(1)} }
   .spin { animation: spin 0.9s linear infinite; }
   @keyframes spin { to { transform: rotate(360deg); } }
-  .fade-in { animation: fadeIn .35s ease both; }
+  .fade-in { animation: fadeIn .3s ease both; }
   @keyframes fadeIn { from { opacity:0; transform: translateY(6px);} to { opacity:1; transform:none; } }
+  .ltr-num { direction: ltr; unicode-bidi: plaintext; display: inline-block; }
   tbody tr:hover { background: #f8fafc; }
   .dark tbody tr:hover { background: rgba(51,65,85,.55); }
-  .table-wrap { max-height: 68vh; overflow: auto; }
-  thead th { position: sticky; top: 0; z-index: 5; }
-  .table-wrap::-webkit-scrollbar { height: 8px; width: 8px; }
-  .table-wrap::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 8px; }
-  .dark .table-wrap::-webkit-scrollbar-thumb { background: #475569; }
-  .ltr-num { direction: ltr; unicode-bidi: plaintext; display: inline-block; }
   th[data-sort] { cursor: pointer; user-select: none; }
   th[data-sort]:hover { background: rgba(255,255,255,.08); }
   #toast { transition: opacity .25s, transform .25s; }
+  .field { width: 100%; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: .75rem; padding: .6rem .8rem; font-size: .9rem; color: #0f172a; outline: none; }
+  .dark .field { background: #0f172a; border-color: #475569; color: #e2e8f0; }
+  .field:focus { box-shadow: 0 0 0 2px #3b82f6; }
+  .clamp2 { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  body { padding-bottom: 5.5rem; }
+  @media (min-width: 1024px) { body { padding-bottom: 0; } }
 </style>
 </head>
 
@@ -64,19 +64,19 @@
 
 <!-- ===================== الترويسة ===================== -->
 <header class="bg-gradient-to-l from-brand-900 via-brand-700 to-brand-600 dark:from-slate-950 dark:via-slate-900 dark:to-slate-800 text-white shadow-lg">
-  <div class="max-w-7xl mx-auto px-4 py-5 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-    <div class="flex items-center gap-4">
-      <div class="w-14 h-14 rounded-2xl bg-white/15 flex items-center justify-center text-3xl shadow-inner">
+  <div class="max-w-7xl mx-auto px-4 py-4 lg:py-5 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+    <div class="flex items-center gap-3">
+      <div class="w-12 h-12 lg:w-14 lg:h-14 rounded-2xl bg-white/15 flex items-center justify-center text-2xl lg:text-3xl shadow-inner">
         <i class="fa-solid fa-hospital-user"></i>
       </div>
       <div>
-        <h1 class="text-xl md:text-2xl font-extrabold leading-tight">لوحة متابعة طلبات التأمين الطبي</h1>
-        <p class="text-sm text-blue-100 dark:text-slate-400 font-medium">مدينة الملك سلمان الطبية — KSAMC</p>
+        <h1 class="text-lg lg:text-2xl font-extrabold leading-tight">لوحة متابعة طلبات التأمين الطبي</h1>
+        <p class="text-xs lg:text-sm text-blue-100 dark:text-slate-400 font-medium">مدينة الملك سلمان الطبية — KSAMC</p>
       </div>
     </div>
 
     <div class="flex items-center gap-2 flex-wrap">
-      <div class="flex items-center gap-2 bg-white/15 rounded-full px-4 py-2 text-sm font-semibold">
+      <div class="flex items-center gap-2 bg-white/15 rounded-full px-3 py-1.5 text-xs lg:text-sm font-semibold">
         <span id="connDot" class="w-2.5 h-2.5 rounded-full bg-amber-300 pulse-dot"></span>
         <span id="connText">جارٍ الاتصال...</span>
       </div>
@@ -84,19 +84,19 @@
         آخر تحديث: <span id="lastUpdate" class="font-bold">—</span>
       </div>
 
-      <button id="refreshBtn" class="bg-white text-brand-700 hover:bg-blue-50 transition rounded-full px-4 py-2 text-sm font-bold flex items-center gap-2 shadow">
+      <button id="refreshBtn" class="bg-white text-brand-700 hover:bg-blue-50 transition rounded-full px-3 py-1.5 text-sm font-bold flex items-center gap-2 shadow">
         <i id="refreshIcon" class="fa-solid fa-rotate"></i><span>تحديث</span>
       </button>
 
-      <button id="themeBtn" title="الوضع الليلي / النهاري" class="w-10 h-10 rounded-full bg-white/15 hover:bg-white/25 transition flex items-center justify-center">
+      <button id="themeBtn" title="الوضع الليلي / النهاري" class="w-9 h-9 rounded-full bg-white/15 hover:bg-white/25 transition flex items-center justify-center">
         <i id="themeIcon" class="fa-solid fa-moon"></i>
       </button>
 
       <div class="relative">
-        <button id="settingsBtn" title="الإعدادات" class="w-10 h-10 rounded-full bg-white/15 hover:bg-white/25 transition flex items-center justify-center">
+        <button id="settingsBtn" title="الإعدادات" class="w-9 h-9 rounded-full bg-white/15 hover:bg-white/25 transition flex items-center justify-center">
           <i class="fa-solid fa-gear"></i>
         </button>
-        <div id="settingsPanel" class="hidden absolute left-0 mt-2 w-72 z-50 card p-4 text-slate-700 dark:text-slate-200 text-sm border border-slate-200 dark:border-slate-700">
+        <div id="settingsPanel" class="hidden absolute left-0 mt-2 w-72 z-50 panel p-4 text-slate-700 dark:text-slate-200 text-sm border border-slate-200 dark:border-slate-700">
           <div class="font-extrabold mb-3"><i class="fa-brands fa-whatsapp text-emerald-500 ml-1"></i> تطبيق الواتساب</div>
           <label class="flex items-center gap-2 mb-2 cursor-pointer">
             <input type="radio" name="waApp" value="business" class="accent-emerald-600">
@@ -115,125 +115,206 @@
   </div>
 </header>
 
-<main class="max-w-7xl mx-auto px-4 py-6 space-y-6">
+<main class="max-w-7xl mx-auto px-3 sm:px-4 py-4 lg:py-6 space-y-4 lg:space-y-6">
 
-  <div id="notice" class="hidden card border-r-4 border-amber-400 p-4 text-sm text-amber-800 dark:text-amber-200 bg-amber-50 dark:bg-amber-900/20 fade-in"></div>
+  <div id="notice" class="hidden panel border-r-4 border-amber-400 p-4 text-sm text-amber-800 dark:text-amber-200 bg-amber-50 dark:bg-amber-900/20 fade-in"></div>
 
   <!-- ===================== بطاقات الإحصائيات ===================== -->
-  <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-    <div class="card p-5 flex items-center gap-4 fade-in">
-      <div class="w-14 h-14 rounded-2xl bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-300 flex items-center justify-center text-2xl">
+  <section class="grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-4">
+    <div class="panel p-3 lg:p-5 flex items-center gap-3 lg:gap-4">
+      <div class="w-11 h-11 lg:w-14 lg:h-14 shrink-0 rounded-2xl bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-300 flex items-center justify-center text-xl lg:text-2xl">
         <i class="fa-solid fa-folder-open"></i>
       </div>
-      <div>
-        <div class="text-sm text-slate-500 dark:text-slate-400 font-semibold">إجمالي السجلات</div>
-        <div id="kpiTotal" class="text-3xl font-extrabold">0</div>
+      <div class="min-w-0">
+        <div class="text-xs lg:text-sm text-slate-500 dark:text-slate-400 font-semibold">إجمالي السجلات</div>
+        <div id="kpiTotal" class="text-2xl lg:text-3xl font-extrabold">0</div>
       </div>
     </div>
 
-    <div class="card p-5 flex items-center gap-4 fade-in">
-      <div class="w-14 h-14 rounded-2xl bg-amber-100 dark:bg-amber-900/40 text-amber-600 dark:text-amber-300 flex items-center justify-center text-2xl">
+    <div class="panel p-3 lg:p-5 flex items-center gap-3 lg:gap-4">
+      <div class="w-11 h-11 lg:w-14 lg:h-14 shrink-0 rounded-2xl bg-amber-100 dark:bg-amber-900/40 text-amber-600 dark:text-amber-300 flex items-center justify-center text-xl lg:text-2xl">
         <i class="fa-solid fa-hourglass-half"></i>
       </div>
-      <div>
-        <div class="text-sm text-slate-500 dark:text-slate-400 font-semibold">تحت الإجراء</div>
-        <div id="kpiPending" class="text-3xl font-extrabold text-amber-600 dark:text-amber-400">0</div>
+      <div class="min-w-0">
+        <div class="text-xs lg:text-sm text-slate-500 dark:text-slate-400 font-semibold">تحت الإجراء</div>
+        <div id="kpiPending" class="text-2xl lg:text-3xl font-extrabold text-amber-600 dark:text-amber-400">0</div>
       </div>
     </div>
 
-    <div class="card p-5 flex items-center gap-4 fade-in">
-      <div class="w-14 h-14 rounded-2xl bg-emerald-100 dark:bg-emerald-900/40 text-emerald-600 dark:text-emerald-300 flex items-center justify-center text-2xl">
+    <div class="panel p-3 lg:p-5 flex items-center gap-3 lg:gap-4">
+      <div class="w-11 h-11 lg:w-14 lg:h-14 shrink-0 rounded-2xl bg-emerald-100 dark:bg-emerald-900/40 text-emerald-600 dark:text-emerald-300 flex items-center justify-center text-xl lg:text-2xl">
         <i class="fa-solid fa-circle-check"></i>
       </div>
-      <div>
-        <div class="text-sm text-slate-500 dark:text-slate-400 font-semibold">تم الإنجاز</div>
-        <div id="kpiDone" class="text-3xl font-extrabold text-emerald-600 dark:text-emerald-400">0</div>
+      <div class="min-w-0">
+        <div class="text-xs lg:text-sm text-slate-500 dark:text-slate-400 font-semibold">تم الإنجاز</div>
+        <div id="kpiDone" class="text-2xl lg:text-3xl font-extrabold text-emerald-600 dark:text-emerald-400">0</div>
       </div>
     </div>
 
-    <div class="card p-5 fade-in">
+    <div class="panel p-3 lg:p-5">
       <div class="flex items-center justify-between mb-2">
-        <div class="text-sm text-slate-500 dark:text-slate-400 font-semibold">نسبة الإنجاز</div>
-        <div id="kpiPct" class="text-2xl font-extrabold text-brand-600 dark:text-brand-500">0%</div>
+        <div class="text-xs lg:text-sm text-slate-500 dark:text-slate-400 font-semibold">نسبة الإنجاز</div>
+        <div id="kpiPct" class="text-xl lg:text-2xl font-extrabold text-brand-600 dark:text-brand-500">0%</div>
       </div>
-      <div class="h-3 rounded-full bg-slate-200 dark:bg-slate-700 overflow-hidden">
+      <div class="h-2.5 rounded-full bg-slate-200 dark:bg-slate-700 overflow-hidden">
         <div id="kpiBar" class="h-full rounded-full bg-gradient-to-l from-emerald-500 to-emerald-400 transition-all duration-700" style="width:0%"></div>
       </div>
-      <div class="text-xs text-slate-400 mt-2" id="kpiNoPhone">—</div>
+      <div class="text-[11px] text-slate-400 mt-2" id="kpiNoPhone">—</div>
     </div>
   </section>
 
   <!-- ===================== البحث والتصفية ===================== -->
-  <section class="card p-4 space-y-3">
+  <section class="panel p-3 lg:p-4">
     <div class="flex flex-col lg:flex-row gap-3 lg:items-center lg:justify-between">
       <div class="relative w-full lg:max-w-md">
         <i class="fa-solid fa-magnifying-glass absolute right-4 top-1/2 -translate-y-1/2 text-slate-400"></i>
         <input id="searchInput" type="search" autocomplete="off"
-               placeholder="ابحث بالاسم أو الملف أو الجوال أو المستندات...  ( / )"
-               class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-600 text-slate-800 dark:text-slate-100 placeholder-slate-400 rounded-xl py-2.5 pr-11 pl-4 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 transition">
+               placeholder="ابحث بالاسم أو الملف أو الجوال أو المستندات..."
+               class="field !pr-11 !py-2.5">
       </div>
 
       <div class="flex items-center gap-2 flex-wrap">
-        <div id="filterBtns" class="flex items-center gap-2 flex-wrap">
-          <button data-filter="all" class="filter-btn px-4 py-2 rounded-xl text-sm font-bold transition">الكل <span id="cntAll" class="mr-1 text-xs opacity-80">0</span></button>
-          <button data-filter="pending" class="filter-btn px-4 py-2 rounded-xl text-sm font-bold transition">تحت الإجراء <span id="cntPending" class="mr-1 text-xs opacity-80">0</span></button>
-          <button data-filter="done" class="filter-btn px-4 py-2 rounded-xl text-sm font-bold transition">تم الإنجاز <span id="cntDone" class="mr-1 text-xs opacity-80">0</span></button>
-          <button data-filter="nophone" class="filter-btn px-4 py-2 rounded-xl text-sm font-bold transition">بدون جوال <span id="cntNoPhone" class="mr-1 text-xs opacity-80">0</span></button>
+        <div class="hidden lg:flex items-center gap-2 flex-wrap">
+          <button data-filter="all" class="filter-btn px-4 py-2 rounded-xl text-sm font-bold transition">الكل <span data-cnt="all" class="mr-1 text-xs opacity-80">0</span></button>
+          <button data-filter="pending" class="filter-btn px-4 py-2 rounded-xl text-sm font-bold transition">تحت الإجراء <span data-cnt="pending" class="mr-1 text-xs opacity-80">0</span></button>
+          <button data-filter="done" class="filter-btn px-4 py-2 rounded-xl text-sm font-bold transition">تم الإنجاز <span data-cnt="done" class="mr-1 text-xs opacity-80">0</span></button>
+          <button data-filter="nophone" class="filter-btn px-4 py-2 rounded-xl text-sm font-bold transition">بدون جوال <span data-cnt="nophone" class="mr-1 text-xs opacity-80">0</span></button>
+          <button data-filter="manual" class="filter-btn px-4 py-2 rounded-xl text-sm font-bold transition">يدوية <span data-cnt="manual" class="mr-1 text-xs opacity-80">0</span></button>
         </div>
-        <button id="exportBtn" class="px-4 py-2 rounded-xl text-sm font-bold bg-emerald-600 hover:bg-emerald-700 text-white transition flex items-center gap-2">
+        <button data-act="add" class="hidden lg:flex px-4 py-2 rounded-xl text-sm font-bold bg-brand-600 hover:bg-brand-700 text-white transition items-center gap-2">
+          <i class="fa-solid fa-plus"></i><span>إضافة طلب</span>
+        </button>
+        <button id="exportBtn" class="flex-1 lg:flex-none px-4 py-2 rounded-xl text-sm font-bold bg-emerald-600 hover:bg-emerald-700 text-white transition flex items-center justify-center gap-2">
           <i class="fa-solid fa-file-csv"></i><span>تصدير</span>
         </button>
       </div>
     </div>
   </section>
 
-  <!-- ===================== الجدول ===================== -->
-  <section class="card overflow-hidden">
-    <div class="table-wrap">
-      <table class="w-full text-sm text-right">
-        <thead>
-          <tr class="bg-slate-800 dark:bg-slate-950 text-white">
-            <th data-sort="idx" class="px-4 py-3 font-bold w-14"># <i class="sort-ic fa-solid fa-sort opacity-50 mr-1 text-xs"></i></th>
-            <th data-sort="name" class="px-4 py-3 font-bold">اسم المريض <i class="sort-ic fa-solid fa-sort opacity-50 mr-1 text-xs"></i></th>
-            <th data-sort="mrn" class="px-4 py-3 font-bold">رقم الملف (MRN) <i class="sort-ic fa-solid fa-sort opacity-50 mr-1 text-xs"></i></th>
-            <th class="px-4 py-3 font-bold">رقم الجوال</th>
-            <th class="px-4 py-3 font-bold">المستندات / المطلوب</th>
-            <th data-sort="status" class="px-4 py-3 font-bold">حالة الطلب <i class="sort-ic fa-solid fa-sort opacity-50 mr-1 text-xs"></i></th>
-            <th class="px-4 py-3 font-bold text-center">واتساب</th>
-            <th class="px-4 py-3 font-bold">الملاحظات</th>
-          </tr>
-        </thead>
-        <tbody id="tbody" class="divide-y divide-slate-100 dark:divide-slate-700"></tbody>
-      </table>
-    </div>
+  <!-- ===================== الجوال والتابلت: بطاقات ===================== -->
+  <section id="cards" class="lg:hidden grid grid-cols-1 md:grid-cols-2 gap-3"></section>
 
-    <div id="emptyState" class="hidden py-16 text-center text-slate-400">
-      <i class="fa-regular fa-folder-open text-5xl mb-3"></i>
-      <p class="font-semibold">لا توجد نتائج مطابقة</p>
-    </div>
-
-    <div id="loadingState" class="py-16 text-center text-slate-400">
-      <i class="fa-solid fa-circle-notch spin text-4xl mb-3"></i>
-      <p class="font-semibold">جارٍ تحميل البيانات...</p>
-    </div>
-
-    <div id="moreWrap" class="hidden p-4 text-center border-t border-slate-100 dark:border-slate-700">
-      <button id="moreBtn" class="px-5 py-2 rounded-xl text-sm font-bold bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 transition"></button>
-    </div>
-
-    <div class="px-4 py-3 bg-slate-50 dark:bg-slate-900/50 border-t border-slate-100 dark:border-slate-700 text-xs text-slate-500 dark:text-slate-400 flex flex-wrap items-center justify-between gap-2">
-      <span>يعرض <b id="shownCount">0</b> من <b id="matchCount">0</b> نتيجة (الإجمالي <b id="totalCount">0</b>)</span>
-      <span><i class="fa-solid fa-clock-rotate-left ml-1"></i> تحديث تلقائي كل 60 ثانية</span>
-    </div>
+  <!-- ===================== الشاشات الكبيرة: جدول ===================== -->
+  <section class="hidden lg:block panel overflow-hidden">
+    <table class="w-full text-sm text-right table-fixed">
+      <colgroup>
+        <col style="width:4%"><col style="width:17%"><col style="width:10%"><col style="width:12%">
+        <col style="width:25%"><col style="width:11%"><col style="width:11%"><col style="width:10%">
+      </colgroup>
+      <thead>
+        <tr class="bg-slate-800 dark:bg-slate-950 text-white">
+          <th data-sort="idx" class="px-3 py-3 font-bold"># <i class="sort-ic fa-solid fa-sort opacity-50 text-xs"></i></th>
+          <th data-sort="name" class="px-3 py-3 font-bold">اسم المريض <i class="sort-ic fa-solid fa-sort opacity-50 text-xs"></i></th>
+          <th data-sort="mrn" class="px-3 py-3 font-bold">الملف (MRN) <i class="sort-ic fa-solid fa-sort opacity-50 text-xs"></i></th>
+          <th class="px-3 py-3 font-bold">الجوال</th>
+          <th class="px-3 py-3 font-bold">المطلوب / الملاحظات</th>
+          <th data-sort="status" class="px-3 py-3 font-bold">الحالة <i class="sort-ic fa-solid fa-sort opacity-50 text-xs"></i></th>
+          <th class="px-3 py-3 font-bold text-center">واتساب</th>
+          <th class="px-3 py-3 font-bold text-center">إجراءات</th>
+        </tr>
+      </thead>
+      <tbody id="tbody" class="divide-y divide-slate-100 dark:divide-slate-700"></tbody>
+    </table>
   </section>
 
-  <footer class="text-center text-xs text-slate-400 pb-6">
+  <div id="emptyState" class="hidden panel py-14 text-center text-slate-400">
+    <i class="fa-regular fa-folder-open text-5xl mb-3"></i>
+    <p class="font-semibold">لا توجد نتائج مطابقة</p>
+  </div>
+
+  <div id="loadingState" class="panel py-14 text-center text-slate-400">
+    <i class="fa-solid fa-circle-notch spin text-4xl mb-3"></i>
+    <p class="font-semibold">جارٍ تحميل البيانات...</p>
+  </div>
+
+  <div id="moreWrap" class="hidden text-center">
+    <button id="moreBtn" class="px-5 py-2.5 rounded-xl text-sm font-bold panel hover:bg-slate-50 dark:hover:bg-slate-700 transition"></button>
+  </div>
+
+  <div class="text-xs text-slate-500 dark:text-slate-400 flex flex-wrap items-center justify-between gap-2 px-1">
+    <span>يعرض <b id="shownCount">0</b> من <b id="matchCount">0</b> نتيجة (الإجمالي <b id="totalCount">0</b>)</span>
+    <span><i class="fa-solid fa-clock-rotate-left ml-1"></i> تحديث تلقائي كل 60 ثانية</span>
+  </div>
+
+  <footer class="text-center text-xs text-slate-400 pb-4">
     لوحة متابعة التأمين الطبي — مدينة الملك سلمان الطبية (KSAMC)
   </footer>
 </main>
 
-<!-- إشعار منبثق -->
-<div id="toast" class="fixed bottom-6 left-1/2 -translate-x-1/2 translate-y-4 opacity-0 pointer-events-none z-[100] bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 px-5 py-2.5 rounded-full text-sm font-bold shadow-xl"></div>
+<!-- شريط الفلاتر السفلي للجوال -->
+<nav class="lg:hidden fixed bottom-0 inset-x-0 z-40 bg-white dark:bg-slate-800 border-t border-slate-200 dark:border-slate-700 px-2 py-2 flex gap-1.5">
+  <button data-filter="all" class="filter-btn flex-1 py-2 rounded-xl text-xs font-bold transition">الكل <span data-cnt="all" class="text-[11px] opacity-80">0</span></button>
+  <button data-filter="pending" class="filter-btn flex-1 py-2 rounded-xl text-xs font-bold transition">تحت الإجراء <span data-cnt="pending" class="text-[11px] opacity-80">0</span></button>
+  <button data-filter="done" class="filter-btn flex-1 py-2 rounded-xl text-xs font-bold transition">منجز <span data-cnt="done" class="text-[11px] opacity-80">0</span></button>
+  <button data-filter="nophone" class="filter-btn flex-1 py-2 rounded-xl text-xs font-bold transition">بدون جوال <span data-cnt="nophone" class="text-[11px] opacity-80">0</span></button>
+  <button data-filter="manual" class="filter-btn flex-1 py-2 rounded-xl text-xs font-bold transition">يدوية <span data-cnt="manual" class="text-[11px] opacity-80">0</span></button>
+</nav>
+
+<!-- زر الإضافة العائم للجوال -->
+<button data-act="add" aria-label="إضافة طلب جديد"
+        class="lg:hidden fixed bottom-20 left-4 z-40 w-14 h-14 rounded-full bg-brand-600 hover:bg-brand-700 text-white text-2xl shadow-xl flex items-center justify-center">
+  <i class="fa-solid fa-plus"></i>
+</button>
+
+<!-- ===================== نافذة إضافة / تعديل طلب ===================== -->
+<div id="modal" class="hidden fixed inset-0 z-[90] bg-black/55 flex items-end sm:items-center justify-center p-0 sm:p-4">
+  <form id="reqForm" novalidate class="panel w-full sm:max-w-lg max-h-[92vh] overflow-y-auto !rounded-b-none sm:!rounded-b-2xl p-5 space-y-4">
+    <div class="flex items-center justify-between">
+      <h2 id="modalTitle" class="text-lg font-extrabold">إضافة طلب جديد</h2>
+      <button type="button" data-act="close-modal" aria-label="إغلاق" class="w-9 h-9 rounded-full hover:bg-slate-100 dark:hover:bg-slate-700 transition"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+
+    <div>
+      <label class="block text-sm font-semibold mb-1" for="fName">اسم المريض <span class="text-red-500">*</span></label>
+      <input id="fName" class="field" autocomplete="off" placeholder="الاسم الكامل">
+      <p id="eName" class="hidden text-xs text-red-500 mt-1">اسم المريض مطلوب.</p>
+    </div>
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+      <div>
+        <label class="block text-sm font-semibold mb-1" for="fMrn">رقم الملف الطبي (MRN)</label>
+        <input id="fMrn" class="field" inputmode="numeric" autocomplete="off" placeholder="1048231" dir="ltr" style="text-align:right">
+      </div>
+      <div>
+        <label class="block text-sm font-semibold mb-1" for="fPhone">رقم الجوال</label>
+        <input id="fPhone" class="field" inputmode="tel" autocomplete="off" placeholder="0501234567" dir="ltr" style="text-align:right">
+        <p id="ePhone" class="hidden text-xs text-red-500 mt-1">رقم الجوال غير صالح. مثال: 0501234567</p>
+      </div>
+    </div>
+
+    <div>
+      <label class="block text-sm font-semibold mb-1" for="fDocs">المستندات / المطلوب</label>
+      <textarea id="fDocs" rows="2" class="field" placeholder="مثال: صورة بطاقة التأمين + تقرير طبي"></textarea>
+    </div>
+
+    <div>
+      <label class="block text-sm font-semibold mb-1" for="fStatus">حالة الطلب</label>
+      <select id="fStatus" class="field">
+        <option value="تحت الإجراء">تحت الإجراء</option>
+        <option value="تم الإنجاز">تم الإنجاز</option>
+      </select>
+    </div>
+
+    <div>
+      <label class="block text-sm font-semibold mb-1" for="fNotes">ملاحظات</label>
+      <textarea id="fNotes" rows="2" class="field" placeholder="اختياري"></textarea>
+    </div>
+
+    <p class="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+      <i class="fa-solid fa-circle-info ml-1"></i>
+      الطلبات اليدوية تُحفظ على هذا الجهاز وهذا المتصفح فقط، ولا تُكتب في Google Sheets. استخدم زر «نسخ كصف» لنقلها إلى الشيت.
+    </p>
+
+    <div class="flex gap-2 pt-1">
+      <button type="submit" class="flex-1 py-2.5 rounded-xl bg-brand-600 hover:bg-brand-700 text-white font-bold transition">
+        <i class="fa-solid fa-floppy-disk ml-1"></i><span id="saveLabel">حفظ الطلب</span>
+      </button>
+      <button type="button" data-act="close-modal" class="px-5 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 font-bold transition">إلغاء</button>
+    </div>
+  </form>
+</div>
+
+<div id="toast" class="fixed bottom-24 lg:bottom-6 left-1/2 -translate-x-1/2 translate-y-4 opacity-0 pointer-events-none z-[100] bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 px-5 py-2.5 rounded-full text-sm font-bold shadow-xl"></div>
 
 <script>
 /* =====================================================================
@@ -241,11 +322,12 @@
    ===================================================================== */
 const CONFIG = {
   SPREADSHEET_ID: '135L6yG_lk5HPj77mZbUqv3-oZNWWd4T5N6yR6hX3Wk0',
-  SHEET_NAME: '',            // اتركه فارغاً لأول ورقة، أو اكتب اسم الورقة بدقة
-  SHEET_GID: '',             // بديل: رقم gid للورقة (اختياري)
+  SHEET_NAME: '',
+  SHEET_GID: '',
   REFRESH_MS: 60000,
-  PAGE_SIZE: 50,
-  HOSPITAL_NAME: 'مدينة الملك سلمان الطبية'
+  PAGE_SIZE: 30,
+  HOSPITAL_NAME: 'مدينة الملك سلمان الطبية',
+  MANUAL_KEY: 'ksamc-manual-v1'
 };
 
 const DEMO_DATA = [
@@ -259,23 +341,26 @@ const DEMO_DATA = [
 /* =====================================================================
    الحالة العامة
    ===================================================================== */
-let allRows = [];
+let sheetRaw = [];          // سجلات الشيت (خام)
+let manualRaw = [];         // الطلبات اليدوية (خام)
+let allRows = [];           // الكل بعد الدمج والإثراء
 let activeFilter = 'all';
 let searchTerm = '';
 let sortKey = 'idx';
-let sortDir = 1;                 // 1 تصاعدي، -1 تنازلي
+let sortDir = 1;
 let visibleLimit = CONFIG.PAGE_SIZE;
 let isDemo = false;
 let isFetching = false;
+let editingId = null;
 
 const $ = (id) => document.getElementById(id);
 
 const STORE = {
   get(k, d) { try { const v = localStorage.getItem(k); return v === null ? d : v; } catch (e) { return d; } },
-  set(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
+  set(k, v) { try { localStorage.setItem(k, v); return true; } catch (e) { return false; } }
 };
 
-let waApp = STORE.get('ksamc-wa-app', 'business');   // business | regular
+let waApp = STORE.get('ksamc-wa-app', 'business');
 
 /* =====================================================================
    أدوات مساعدة
@@ -346,7 +431,7 @@ function toast(msg) {
   t.textContent = msg;
   t.classList.remove('opacity-0', 'translate-y-4');
   clearTimeout(toast._t);
-  toast._t = setTimeout(() => t.classList.add('opacity-0', 'translate-y-4'), 1800);
+  toast._t = setTimeout(() => t.classList.add('opacity-0', 'translate-y-4'), 2000);
 }
 
 async function copyText(text) {
@@ -365,7 +450,7 @@ async function copyText(text) {
 }
 
 /* =====================================================================
-   واتساب (بزنس / عادي)
+   واتساب
    ===================================================================== */
 function buildMessage(row) {
   return `السلام عليكم ورحمة الله وبركاته،
@@ -388,8 +473,6 @@ function buildWhatsAppLink(row) {
   const enc = encodeURIComponent(buildMessage(row));
   const web = `https://wa.me/${phone}?text=${enc}`;
   const isAndroid = /Android/i.test(navigator.userAgent);
-
-  // أندرويد + واتساب بزنس: فتح تطبيق البزنس مباشرة (com.whatsapp.w4b) مع رابط بديل
   if (waApp === 'business' && isAndroid) {
     return {
       href: `intent://send?phone=${phone}&text=${enc}#Intent;scheme=whatsapp;package=com.whatsapp.w4b;S.browser_fallback_url=${encodeURIComponent(web)};end`,
@@ -398,6 +481,23 @@ function buildWhatsAppLink(row) {
   }
   return { href: web, external: true };
 }
+
+/* =====================================================================
+   الطلبات اليدوية (تخزين محلي)
+   ===================================================================== */
+function loadManual() {
+  try {
+    const arr = JSON.parse(STORE.get(CONFIG.MANUAL_KEY, '[]'));
+    manualRaw = Array.isArray(arr) ? arr : [];
+  } catch (e) { manualRaw = []; }
+}
+
+function saveManual() {
+  const ok = STORE.set(CONFIG.MANUAL_KEY, JSON.stringify(manualRaw));
+  if (!ok) toast('تعذّر الحفظ على هذا المتصفح');
+}
+
+function newId() { return 'm' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6); }
 
 /* =====================================================================
    جلب البيانات
@@ -434,9 +534,6 @@ async function fetchCsvText() {
   throw lastErr || new Error('تعذّر الجلب');
 }
 
-/* =====================================================================
-   تحليل CSV وربط الأعمدة
-   ===================================================================== */
 const COLUMN_KEYS = {
   name:   ['اسم المريض', 'اسم', 'المريض', 'patient', 'name'],
   mrn:    ['mrn', 'الملف الطبي', 'رقم الملف', 'ملف', 'file'],
@@ -492,24 +589,34 @@ function parseSheet(csvText) {
   return out;
 }
 
-function enrichRows(list) {
-  return list.map((r, i) => {
-    const phoneIntl = extractPhone(r.phone);
-    const statusKey = classifyStatus(r.status);
-    const row = {
-      idx: i + 1,
-      name: r.name,
-      mrn: arabicToEnglishDigits(r.mrn),
-      docs: r.docs,
-      statusText: r.status || (statusKey === 'done' ? 'تم الإنجاز' : 'تحت الإجراء'),
-      statusKey,
-      phoneRaw: r.phone,
-      phoneIntl,
-      notes: r.notes
-    };
-    row.searchBlob = normalizeText([row.name, row.mrn, row.docs, row.statusText, row.phoneRaw, phoneDisplay(row), row.notes].join(' '));
+function enrich(r, manual, uid) {
+  const statusKey = classifyStatus(r.status);
+  const row = {
+    uid,
+    manual,
+    name: r.name || '',
+    mrn: arabicToEnglishDigits(r.mrn || ''),
+    docs: r.docs || '',
+    statusText: r.status || (statusKey === 'done' ? 'تم الإنجاز' : 'تحت الإجراء'),
+    statusKey,
+    phoneRaw: r.phone || '',
+    phoneIntl: extractPhone(r.phone),
+    notes: r.notes || ''
+  };
+  row.searchBlob = normalizeText([row.name, row.mrn, row.docs, row.statusText, row.phoneRaw, phoneDisplay(row), row.notes, manual ? 'يدوي' : ''].join(' '));
+  return row;
+}
+
+function rebuild() {
+  const sheetMrns = new Set(sheetRaw.map((r) => arabicToEnglishDigits(r.mrn || '')).filter(Boolean));
+  const manual = manualRaw.slice().reverse().map((r) => {
+    const row = enrich(r, true, r.id);
+    row.dupInSheet = !!(row.mrn && sheetMrns.has(row.mrn));
     return row;
   });
+  const sheet = sheetRaw.map((r, i) => enrich(r, false, 's' + i));
+  allRows = manual.concat(sheet);
+  allRows.forEach((r, i) => { r.idx = i + 1; });
 }
 
 /* =====================================================================
@@ -533,6 +640,7 @@ function updateKPIs() {
   const done = allRows.filter((r) => r.statusKey === 'done').length;
   const pending = total - done;
   const noPhone = allRows.filter((r) => !r.phoneIntl).length;
+  const manual = allRows.filter((r) => r.manual).length;
   const pct = total ? Math.round((done / total) * 100) : 0;
 
   $('kpiTotal').textContent = total;
@@ -541,20 +649,19 @@ function updateKPIs() {
   $('kpiPct').textContent = pct + '%';
   $('kpiBar').style.width = pct + '%';
   $('kpiNoPhone').textContent = noPhone ? `${noPhone} سجل بدون رقم جوال صالح` : 'جميع السجلات لها أرقام جوال';
-  $('cntAll').textContent = total;
-  $('cntPending').textContent = pending;
-  $('cntDone').textContent = done;
-  $('cntNoPhone').textContent = noPhone;
   $('totalCount').textContent = total;
+
+  const counts = { all: total, pending, done, nophone: noPhone, manual };
+  document.querySelectorAll('[data-cnt]').forEach((el) => { el.textContent = counts[el.dataset.cnt]; });
 }
 
 function updateFilterButtons() {
   document.querySelectorAll('.filter-btn').forEach((btn) => {
     const active = btn.dataset.filter === activeFilter;
-    btn.className = 'filter-btn px-4 py-2 rounded-xl text-sm font-bold transition ' +
-      (active
-        ? 'bg-brand-600 text-white shadow'
-        : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-600');
+    const base = btn.className.split(' ').filter((c) => !/^(bg-|text-slate|text-white|hover:bg|shadow|dark:bg|dark:text|dark:hover)/.test(c)).join(' ');
+    btn.className = base + ' ' + (active
+      ? 'bg-brand-600 text-white shadow'
+      : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-600');
   });
 }
 
@@ -562,51 +669,114 @@ function updateSortIcons() {
   document.querySelectorAll('th[data-sort]').forEach((th) => {
     const ic = th.querySelector('.sort-ic');
     if (!ic) return;
-    if (th.dataset.sort === sortKey) {
-      ic.className = 'sort-ic fa-solid mr-1 text-xs ' + (sortDir === 1 ? 'fa-sort-up' : 'fa-sort-down');
-    } else {
-      ic.className = 'sort-ic fa-solid fa-sort opacity-50 mr-1 text-xs';
-    }
+    ic.className = th.dataset.sort === sortKey
+      ? 'sort-ic fa-solid text-xs ' + (sortDir === 1 ? 'fa-sort-up' : 'fa-sort-down')
+      : 'sort-ic fa-solid fa-sort opacity-50 text-xs';
   });
 }
 
 function statusBadge(row) {
   if (row.statusKey === 'done') {
-    return `<span class="inline-flex items-center gap-1.5 bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300 px-3 py-1 rounded-full text-xs font-bold">
+    return `<span class="inline-flex items-center gap-1.5 bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300 px-2.5 py-1 rounded-full text-xs font-bold whitespace-nowrap">
               <i class="fa-solid fa-circle-check"></i>${escapeHtml(row.statusText)}</span>`;
   }
-  return `<span class="inline-flex items-center gap-1.5 bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300 px-3 py-1 rounded-full text-xs font-bold">
+  return `<span class="inline-flex items-center gap-1.5 bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300 px-2.5 py-1 rounded-full text-xs font-bold whitespace-nowrap">
             <i class="fa-solid fa-hourglass-half"></i>${escapeHtml(row.statusText)}</span>`;
 }
 
-function phoneCell(row) {
-  if (row.phoneIntl) {
-    return `<div class="flex items-center gap-2">
-              <a href="tel:+${row.phoneIntl}" class="ltr-num font-semibold text-brand-700 dark:text-blue-300 hover:underline">${escapeHtml(phoneDisplay(row))}</a>
-              <button data-act="copy-phone" data-idx="${row.idx}" title="نسخ الرقم" class="text-slate-400 hover:text-brand-600 dark:hover:text-blue-300 transition"><i class="fa-regular fa-copy"></i></button>
-            </div>`;
-  }
-  if (row.phoneRaw) {
-    return `<span class="ltr-num text-red-500 dark:text-red-400" title="رقم غير صالح">${escapeHtml(row.phoneRaw)}</span>`;
-  }
-  return '<span class="text-slate-300 dark:text-slate-600">—</span>';
+function manualBadge(row) {
+  if (!row.manual) return '';
+  const extra = row.dupInSheet ? ' <span class="text-amber-600 dark:text-amber-400">· موجود في الشيت</span>' : '';
+  return `<span class="inline-flex items-center gap-1 text-[11px] font-bold bg-violet-100 dark:bg-violet-900/40 text-violet-700 dark:text-violet-300 px-2 py-0.5 rounded-full whitespace-nowrap"><i class="fa-solid fa-pen-to-square"></i> يدوي${extra}</span>`;
 }
 
-function actionsCell(row) {
+function phoneInline(row) {
+  if (row.phoneIntl) {
+    return `<a href="tel:+${row.phoneIntl}" class="ltr-num font-semibold text-brand-700 dark:text-blue-300 hover:underline">${escapeHtml(phoneDisplay(row))}</a>`;
+  }
+  if (row.phoneRaw) return `<span class="ltr-num text-red-500 dark:text-red-400" title="رقم غير صالح">${escapeHtml(row.phoneRaw)}</span>`;
+  return '<span class="text-slate-300 dark:text-slate-600">لا يوجد جوال</span>';
+}
+
+function waButtons(row, big) {
   const wa = buildWhatsAppLink(row);
+  const cpMsg = `<button data-act="copy-msg" data-id="${row.uid}" title="نسخ نص الرسالة" class="${big ? 'w-12 h-11 rounded-xl' : 'w-8 h-8 rounded-full'} shrink-0 border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-500 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition"><i class="fa-regular fa-message"></i></button>`;
   if (!wa.href) {
-    return `<span title="لا يوجد رقم جوال صالح" class="inline-flex items-center justify-center w-10 h-10 rounded-full bg-slate-200 dark:bg-slate-700 text-slate-400 cursor-not-allowed">
-              <i class="fa-brands fa-whatsapp text-xl"></i></span>`;
+    const off = big
+      ? `<span class="flex-1 h-11 rounded-xl bg-slate-200 dark:bg-slate-700 text-slate-400 flex items-center justify-center gap-2 font-bold text-sm cursor-not-allowed"><i class="fa-brands fa-whatsapp text-xl"></i> لا يوجد جوال صالح</span>`
+      : `<span title="لا يوجد رقم جوال صالح" class="inline-flex items-center justify-center w-9 h-9 rounded-full bg-slate-200 dark:bg-slate-700 text-slate-400 cursor-not-allowed"><i class="fa-brands fa-whatsapp text-lg"></i></span>`;
+    return big ? off : off;
   }
   const target = wa.external ? 'target="_blank" rel="noopener noreferrer"' : '';
-  return `<div class="flex items-center justify-center gap-2">
-            <a href="${wa.href}" ${target} title="فتح محادثة ${escapeHtml(row.name)} في واتساب ${waApp === 'business' ? 'بزنس' : ''}"
-               class="inline-flex items-center justify-center w-10 h-10 rounded-full bg-emerald-500 hover:bg-emerald-600 text-white shadow transition">
-               <i class="fa-brands fa-whatsapp text-xl"></i></a>
-            <button data-act="copy-msg" data-idx="${row.idx}" title="نسخ نص الرسالة"
-               class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600 transition">
-               <i class="fa-regular fa-message text-sm"></i></button>
+  const title = `فتح محادثة ${escapeHtml(row.name)} في واتساب ${waApp === 'business' ? 'بزنس' : ''}`;
+  if (big) {
+    return `<a href="${wa.href}" ${target} title="${title}" class="flex-1 h-11 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white flex items-center justify-center gap-2 font-bold text-sm shadow transition">
+              <i class="fa-brands fa-whatsapp text-xl"></i> واتساب ${waApp === 'business' ? 'بزنس' : ''}</a>${cpMsg}`;
+  }
+  return `<div class="flex items-center justify-center gap-1.5">
+            <a href="${wa.href}" ${target} title="${title}" class="inline-flex items-center justify-center w-9 h-9 rounded-full bg-emerald-500 hover:bg-emerald-600 text-white shadow transition"><i class="fa-brands fa-whatsapp text-lg"></i></a>
+            ${cpMsg}
           </div>`;
+}
+
+function manualActions(row, compact) {
+  const b = (act, icon, title, extra) =>
+    `<button data-act="${act}" data-id="${row.uid}" title="${title}" class="${compact ? 'w-8 h-8' : 'w-9 h-9'} rounded-lg bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-600 dark:text-slate-300 transition ${extra || ''}"><i class="${icon}"></i></button>`;
+  if (!row.manual) {
+    return `<div class="flex items-center justify-center gap-1">${b('copy-row', 'fa-regular fa-clipboard', 'نسخ كصف للشيت')}</div>`;
+  }
+  return `<div class="flex items-center justify-center gap-1 flex-wrap">
+    ${b('toggle', row.statusKey === 'done' ? 'fa-solid fa-rotate-left' : 'fa-solid fa-check', row.statusKey === 'done' ? 'إعادة إلى تحت الإجراء' : 'تم الإنجاز', row.statusKey === 'done' ? '' : '!text-emerald-600 dark:!text-emerald-400')}
+    ${b('edit', 'fa-solid fa-pen', 'تعديل')}
+    ${b('copy-row', 'fa-regular fa-clipboard', 'نسخ كصف للشيت')}
+    ${b('delete', 'fa-solid fa-trash', 'حذف', '!text-red-500')}
+  </div>`;
+}
+
+function cardHtml(r) {
+  const done = r.statusKey === 'done';
+  return `
+  <article class="relative overflow-hidden rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 p-4 pr-5 fade-in">
+    <div class="absolute top-0 bottom-0 right-0 w-1.5 ${done ? 'bg-emerald-500' : 'bg-amber-500'}"></div>
+    <div class="flex items-start justify-between gap-2 mb-2">
+      <div class="min-w-0">
+        <div class="font-extrabold text-base leading-snug">${escapeHtml(r.name) || '<span class="text-slate-300">بدون اسم</span>'}</div>
+        <div class="mt-1 flex items-center gap-2 flex-wrap">${manualBadge(r)}<span class="text-[11px] text-slate-400">#${r.idx}</span></div>
+      </div>
+      ${statusBadge(r)}
+    </div>
+    <div class="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-slate-500 dark:text-slate-400 mb-2">
+      <span><i class="fa-solid fa-id-card ml-1"></i><span class="ltr-num font-semibold text-slate-700 dark:text-slate-200">${escapeHtml(r.mrn) || '—'}</span></span>
+      <span><i class="fa-solid fa-phone ml-1"></i>${phoneInline(r)}</span>
+    </div>
+    ${r.docs ? `<div class="text-sm mb-1"><span class="text-slate-500 dark:text-slate-400">المطلوب: </span>${escapeHtml(r.docs)}</div>` : ''}
+    ${r.notes ? `<div class="text-sm text-slate-500 dark:text-slate-400 mb-1">${escapeHtml(r.notes)}</div>` : ''}
+    <div class="flex items-center gap-2 mt-3">${waButtons(r, true)}</div>
+    <div class="mt-2">${manualActions(r, false)}</div>
+  </article>`;
+}
+
+function rowHtml(r) {
+  return `
+  <tr class="align-top">
+    <td class="px-3 py-3 text-slate-400 font-semibold">${r.idx}</td>
+    <td class="px-3 py-3">
+      <div class="font-bold text-slate-800 dark:text-slate-100 break-words">${escapeHtml(r.name) || '<span class="text-slate-300">—</span>'}</div>
+      ${r.manual ? `<div class="mt-1">${manualBadge(r)}</div>` : ''}
+    </td>
+    <td class="px-3 py-3"><span class="ltr-num font-semibold text-slate-700 dark:text-slate-200 bg-slate-100 dark:bg-slate-700 px-2 py-0.5 rounded">${escapeHtml(r.mrn) || '—'}</span></td>
+    <td class="px-3 py-3">
+      ${phoneInline(r)}
+      ${r.phoneIntl ? `<button data-act="copy-phone" data-id="${r.uid}" title="نسخ الرقم" class="mr-1 text-slate-400 hover:text-brand-600 dark:hover:text-blue-300 transition"><i class="fa-regular fa-copy"></i></button>` : ''}
+    </td>
+    <td class="px-3 py-3 text-slate-600 dark:text-slate-300">
+      <div class="break-words">${escapeHtml(r.docs) || '<span class="text-slate-300 dark:text-slate-600">—</span>'}</div>
+      ${r.notes ? `<div class="text-xs text-slate-500 dark:text-slate-400 mt-1 break-words">${escapeHtml(r.notes)}</div>` : ''}
+    </td>
+    <td class="px-3 py-3">${statusBadge(r)}</td>
+    <td class="px-3 py-3">${waButtons(r, false)}</td>
+    <td class="px-3 py-3">${manualActions(r, true)}</td>
+  </tr>`;
 }
 
 function getFilteredRows() {
@@ -615,6 +785,7 @@ function getFilteredRows() {
     if (activeFilter === 'pending' && r.statusKey !== 'pending') return false;
     if (activeFilter === 'done' && r.statusKey !== 'done') return false;
     if (activeFilter === 'nophone' && r.phoneIntl) return false;
+    if (activeFilter === 'manual' && !r.manual) return false;
     if (q && !r.searchBlob.includes(q)) return false;
     return true;
   });
@@ -634,18 +805,8 @@ function renderTable() {
   const filtered = getFilteredRows();
   const shown = filtered.slice(0, visibleLimit);
 
-  $('tbody').innerHTML = shown.map((r) => `
-    <tr class="transition">
-      <td class="px-4 py-3 text-slate-400 font-semibold">${r.idx}</td>
-      <td class="px-4 py-3 font-bold text-slate-800 dark:text-slate-100">${escapeHtml(r.name) || '<span class="text-slate-300 dark:text-slate-600">—</span>'}</td>
-      <td class="px-4 py-3"><span class="ltr-num font-semibold text-slate-700 dark:text-slate-200 bg-slate-100 dark:bg-slate-700 px-2 py-0.5 rounded">${escapeHtml(r.mrn) || '—'}</span></td>
-      <td class="px-4 py-3">${phoneCell(r)}</td>
-      <td class="px-4 py-3 text-slate-600 dark:text-slate-300 max-w-xs">${escapeHtml(r.docs) || '<span class="text-slate-300 dark:text-slate-600">—</span>'}</td>
-      <td class="px-4 py-3">${statusBadge(r)}</td>
-      <td class="px-4 py-3 text-center">${actionsCell(r)}</td>
-      <td class="px-4 py-3 text-slate-500 dark:text-slate-400 max-w-xs">${escapeHtml(r.notes) || '<span class="text-slate-300 dark:text-slate-600">—</span>'}</td>
-    </tr>
-  `).join('');
+  $('cards').innerHTML = shown.map(cardHtml).join('');
+  $('tbody').innerHTML = shown.map(rowHtml).join('');
 
   $('shownCount').textContent = shown.length;
   $('matchCount').textContent = filtered.length;
@@ -675,10 +836,10 @@ function stamp() {
 function exportCsv() {
   const rows = getFilteredRows();
   if (!rows.length) { toast('لا توجد بيانات للتصدير'); return; }
-  const head = ['#', 'اسم المريض', 'MRN', 'رقم الجوال', 'المستندات / المطلوب', 'الحالة', 'الملاحظات'];
+  const head = ['#', 'اسم المريض', 'MRN', 'رقم الجوال', 'المستندات / المطلوب', 'الحالة', 'الملاحظات', 'المصدر'];
   const esc = (v) => '"' + String(v ?? '').replace(/"/g, '""') + '"';
   const lines = [head.map(esc).join(',')].concat(
-    rows.map((r) => [r.idx, r.name, r.mrn, phoneDisplay(r), r.docs, r.statusText, r.notes].map(esc).join(','))
+    rows.map((r) => [r.idx, r.name, r.mrn, phoneDisplay(r), r.docs, r.statusText, r.notes, r.manual ? 'يدوي' : 'الشيت'].map(esc).join(','))
   );
   const blob = new Blob(['\uFEFF' + lines.join('\r\n')], { type: 'text/csv;charset=utf-8;' });
   const a = document.createElement('a');
@@ -693,24 +854,91 @@ function exportCsv() {
 }
 
 /* =====================================================================
+   نافذة إضافة / تعديل
+   ===================================================================== */
+function openModal(id) {
+  editingId = id || null;
+  const rec = id ? manualRaw.find((m) => m.id === id) : null;
+  $('modalTitle').textContent = rec ? 'تعديل الطلب' : 'إضافة طلب جديد';
+  $('saveLabel').textContent = rec ? 'حفظ التعديلات' : 'حفظ الطلب';
+  $('fName').value = rec ? rec.name : '';
+  $('fMrn').value = rec ? rec.mrn : '';
+  $('fPhone').value = rec ? rec.phone : '';
+  $('fDocs').value = rec ? rec.docs : '';
+  $('fStatus').value = rec ? (classifyStatus(rec.status) === 'done' ? 'تم الإنجاز' : 'تحت الإجراء') : 'تحت الإجراء';
+  $('fNotes').value = rec ? rec.notes : '';
+  $('eName').classList.add('hidden');
+  $('ePhone').classList.add('hidden');
+  $('modal').classList.remove('hidden');
+  document.body.style.overflow = 'hidden';
+  setTimeout(() => $('fName').focus(), 50);
+}
+
+function closeModal() {
+  $('modal').classList.add('hidden');
+  document.body.style.overflow = '';
+  editingId = null;
+}
+
+$('reqForm').addEventListener('submit', (e) => {
+  e.preventDefault();
+  const name = $('fName').value.trim();
+  const phone = $('fPhone').value.trim();
+  let ok = true;
+
+  $('eName').classList.toggle('hidden', !!name);
+  if (!name) ok = false;
+
+  const phoneBad = phone !== '' && !extractPhone(phone);
+  $('ePhone').classList.toggle('hidden', !phoneBad);
+  if (phoneBad) ok = false;
+
+  if (!ok) return;
+
+  const data = {
+    name,
+    mrn: arabicToEnglishDigits($('fMrn').value.trim()),
+    phone,
+    docs: $('fDocs').value.trim(),
+    status: $('fStatus').value,
+    notes: $('fNotes').value.trim()
+  };
+
+  if (editingId) {
+    const i = manualRaw.findIndex((m) => m.id === editingId);
+    if (i > -1) manualRaw[i] = Object.assign({}, manualRaw[i], data);
+    toast('تم حفظ التعديلات');
+  } else {
+    manualRaw.push(Object.assign({ id: newId(), createdAt: Date.now() }, data));
+    toast('تمت إضافة الطلب');
+  }
+  saveManual();
+  closeModal();
+  rebuild();
+  renderAll();
+});
+
+$('modal').addEventListener('click', (e) => { if (e.target === $('modal')) closeModal(); });
+
+/* =====================================================================
    دورة التحميل
    ===================================================================== */
 async function loadData(manual = false) {
   if (isFetching) return;
   isFetching = true;
   $('refreshIcon').classList.add('spin');
-  if (manual || !allRows.length) setConn('loading', 'جارٍ التحديث...');
+  if (manual || !sheetRaw.length) setConn('loading', 'جارٍ التحديث...');
 
   try {
     const csv = await fetchCsvText();
-    allRows = enrichRows(parseSheet(csv));
+    sheetRaw = parseSheet(csv);
     isDemo = false;
     showNotice('');
     setConn('live', 'متصل مباشرة');
   } catch (err) {
     console.warn('Sheet fetch failed:', err);
-    if (!allRows.length || isDemo) {
-      allRows = enrichRows(DEMO_DATA);
+    if (!sheetRaw.length || isDemo) {
+      sheetRaw = DEMO_DATA.slice();
       isDemo = true;
     }
     setConn('error', isDemo ? 'غير متصل — بيانات توضيحية' : 'تعذّر التحديث');
@@ -728,13 +956,14 @@ async function loadData(manual = false) {
     $('loadingState').classList.add('hidden');
     $('refreshIcon').classList.remove('spin');
     stamp();
+    rebuild();
     renderAll();
     isFetching = false;
   }
 }
 
 /* =====================================================================
-   الثيم (دارك مود)
+   الثيم
    ===================================================================== */
 function applyTheme(dark) {
   document.documentElement.classList.toggle('dark', dark);
@@ -756,13 +985,58 @@ $('searchInput').addEventListener('input', (e) => {
   renderTable();
 });
 
-$('filterBtns').addEventListener('click', (e) => {
-  const btn = e.target.closest('.filter-btn');
-  if (!btn) return;
-  activeFilter = btn.dataset.filter;
-  visibleLimit = CONFIG.PAGE_SIZE;
-  updateFilterButtons();
-  renderTable();
+document.addEventListener('click', async (e) => {
+  /* الفلاتر */
+  const fbtn = e.target.closest('.filter-btn');
+  if (fbtn) {
+    activeFilter = fbtn.dataset.filter;
+    visibleLimit = CONFIG.PAGE_SIZE;
+    updateFilterButtons();
+    renderTable();
+    return;
+  }
+
+  /* الإجراءات */
+  const btn = e.target.closest('[data-act]');
+  if (btn) {
+    const act = btn.dataset.act;
+    if (act === 'add') { openModal(); return; }
+    if (act === 'close-modal') { closeModal(); return; }
+
+    const row = allRows.find((r) => r.uid === btn.dataset.id);
+    if (!row) return;
+
+    if (act === 'copy-phone') {
+      await copyText(phoneDisplay(row));
+      toast('تم نسخ رقم الجوال');
+    } else if (act === 'copy-msg') {
+      await copyText(buildMessage(row));
+      toast('تم نسخ نص الرسالة');
+    } else if (act === 'copy-row') {
+      const line = [row.name, row.mrn, row.docs, row.statusText, phoneDisplay(row), row.notes].join('\t');
+      await copyText(line);
+      toast('تم نسخ الصف — الصقه في الشيت');
+    } else if (act === 'edit') {
+      openModal(row.uid);
+    } else if (act === 'toggle') {
+      const rec = manualRaw.find((m) => m.id === row.uid);
+      if (rec) {
+        rec.status = row.statusKey === 'done' ? 'تحت الإجراء' : 'تم الإنجاز';
+        saveManual();
+        rebuild();
+        renderAll();
+        toast(rec.status === 'تم الإنجاز' ? 'تم تعليم الطلب كمنجز' : 'أُعيد الطلب إلى تحت الإجراء');
+      }
+    } else if (act === 'delete') {
+      if (confirm(`حذف طلب «${row.name || 'بدون اسم'}»؟ لا يمكن التراجع.`)) {
+        manualRaw = manualRaw.filter((m) => m.id !== row.uid);
+        saveManual();
+        rebuild();
+        renderAll();
+        toast('تم حذف الطلب');
+      }
+    }
+  }
 });
 
 document.querySelectorAll('th[data-sort]').forEach((th) => {
@@ -779,24 +1053,9 @@ $('moreBtn').addEventListener('click', () => {
   renderTable();
 });
 
-$('tbody').addEventListener('click', async (e) => {
-  const btn = e.target.closest('[data-act]');
-  if (!btn) return;
-  const row = allRows.find((r) => String(r.idx) === btn.dataset.idx);
-  if (!row) return;
-  if (btn.dataset.act === 'copy-phone') {
-    await copyText(phoneDisplay(row));
-    toast('تم نسخ رقم الجوال');
-  } else if (btn.dataset.act === 'copy-msg') {
-    await copyText(buildMessage(row));
-    toast('تم نسخ نص الرسالة');
-  }
-});
-
 $('exportBtn').addEventListener('click', exportCsv);
 $('refreshBtn').addEventListener('click', () => loadData(true));
 
-/* الإعدادات */
 $('settingsBtn').addEventListener('click', (e) => {
   e.stopPropagation();
   $('settingsPanel').classList.toggle('hidden');
@@ -814,10 +1073,10 @@ document.querySelectorAll('input[name="waApp"]').forEach((r) => {
   });
 });
 
-/* اختصار: ( / ) للانتقال إلى البحث */
 document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape' && !$('modal').classList.contains('hidden')) { closeModal(); return; }
   const tag = (e.target.tagName || '').toLowerCase();
-  if (e.key === '/' && tag !== 'input' && tag !== 'textarea') {
+  if (e.key === '/' && tag !== 'input' && tag !== 'textarea' && tag !== 'select') {
     e.preventDefault();
     $('searchInput').focus();
   }
@@ -830,6 +1089,8 @@ window.addEventListener('online', () => loadData(true));
    بدء التشغيل
    ===================================================================== */
 applyTheme(document.documentElement.classList.contains('dark'));
+loadManual();
+rebuild();
 updateFilterButtons();
 updateSortIcons();
 loadData();
