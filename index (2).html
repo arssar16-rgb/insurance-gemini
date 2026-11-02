@@ -1,0 +1,1215 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>لوحة متابعة طلبات التأمين الطبي | KSAMC</title>
+
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+  (function () {
+    try {
+      var t = localStorage.getItem('ksamc-theme');
+      var dark = t ? t === 'dark' : window.matchMedia('(prefers-color-scheme: dark)').matches;
+      if (dark) document.documentElement.classList.add('dark');
+    } catch (e) {}
+  })();
+</script>
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+
+<style>
+  :root {
+    --bg: #ffffff;
+    --board: #ebedee;
+    --card: #ffffff;
+    --ink: #303b4b;
+    --body: #5d6673;
+    --muted: #8d929a;
+    --line: #e1e4e7;
+    --field: #bbbec3;
+    --hover: #f4f5f6;
+    --slate: #303b4b;
+    --slate2: #46505f;
+    --mist: #a2a7af;
+    --orange: #f4511c;
+    --ok: #1b7f5c;  --ok-bg: #e2f3ea;  --ok-bar: #2fa57a;
+    --warn: #9a5200; --warn-bg: #fdefd9; --warn-bar: #e8962b;
+    --manual: #5b4bb5; --manual-bg: #ece9fb;
+    --shadow-card: rgba(27,37,54,.08) 0 12px 28px 0, rgba(27,37,54,.03) 0 8px 8px -2px, rgba(27,37,54,.04) 0 3px 3px -1.5px;
+    --shadow-float: rgba(0,0,0,.16) 0 16px 56px 4px, rgba(0,0,0,.08) 0 2px 10px 0;
+  }
+  .dark {
+    --bg: #28323f;
+    --board: #222b36;
+    --card: #303b4b;
+    --ink: #ffffff;
+    --body: #a2a7af;
+    --muted: #8d929a;
+    --line: #46505f;
+    --field: #5d6673;
+    --hover: #38445a;
+    --ok: #5fd3a2;  --ok-bg: rgba(95,211,162,.14);
+    --warn: #ffc069; --warn-bg: rgba(255,192,105,.14);
+    --manual: #c4b8ff; --manual-bg: rgba(196,184,255,.14);
+    --shadow-card: rgba(0,0,0,.35) 0 12px 28px 0, rgba(0,0,0,.2) 0 8px 8px -2px, rgba(0,0,0,.2) 0 3px 3px -1.5px;
+    --shadow-float: rgba(0,0,0,.5) 0 16px 56px 4px, rgba(0,0,0,.3) 0 2px 10px 0;
+  }
+
+  html, body { font-family: 'Cairo', sans-serif; }
+  body { background: var(--bg); color: var(--body); min-height: 100vh; transition: background .25s, color .25s; padding-bottom: 5.5rem; }
+  @media (min-width: 1024px) { body { padding-bottom: 0; } }
+
+  .serif { font-family: 'Cairo', sans-serif; }
+  h1, h2, .ttl { color: var(--ink); }
+
+  /* ----- الترويسة ----- */
+  .band { background: var(--slate); color: #fff; }
+  .nav-btn { background: var(--slate2); color: #fff; border-radius: 6px; padding: 8px 14px; font-weight: 700; font-size: 14px; transition: filter .15s; display: inline-flex; align-items: center; gap: 8px; }
+  .nav-btn:hover { filter: brightness(1.12); }
+  .nav-icon { width: 38px; height: 38px; padding: 0; justify-content: center; }
+  .pill-conn { background: rgba(255,255,255,.08); border-radius: 6px; padding: 8px 12px; font-size: 13px; font-weight: 600; display: inline-flex; align-items: center; gap: 8px; }
+
+  /* ----- أزرار ----- */
+  .btn { border-radius: 6px; padding: 10px 16px; font-weight: 700; font-size: 15px; line-height: 1.33; display: inline-flex; align-items: center; justify-content: center; gap: 8px; transition: filter .15s, background .15s; cursor: pointer; border: 0; font-family: inherit; }
+  .btn-orange { background: var(--orange); color: #fff; }
+  .btn-orange:hover { filter: brightness(1.08); }
+  .btn-outline { background: transparent; color: var(--body); box-shadow: inset 0 0 0 1px var(--field); }
+  .btn-outline:hover { background: var(--hover); }
+  .btn-wa { background: #1fa855; color: #fff; }
+  .btn-wa:hover { background: #198f48; }
+  .btn-off { background: var(--board); color: var(--muted); cursor: not-allowed; }
+  .icon-btn { width: 36px; height: 36px; border-radius: 6px; display: inline-flex; align-items: center; justify-content: center; background: transparent; color: var(--body); box-shadow: inset 0 0 0 1px var(--line); transition: background .15s; cursor: pointer; border: 0; font-size: 14px; }
+  .icon-btn:hover { background: var(--hover); }
+  .icon-btn.danger { color: #d64545; }
+  .icon-btn.good { color: var(--ok); }
+
+  /* ----- البطاقات والألواح ----- */
+  .card { background: var(--card); border-radius: 10.26px; box-shadow: var(--shadow-card); transition: background .25s; }
+  .float { box-shadow: var(--shadow-float); }
+  .kpi-num { font-family: 'Cairo', sans-serif; font-weight: 800; font-size: 34px; line-height: 1; color: var(--ink); }
+  .kpi-lbl { font-size: 13px; color: var(--body); font-weight: 600; }
+
+  .field { width: 100%; background: transparent; color: var(--ink); border-radius: 4px; padding: 10px 14px; font-size: 14px; font-weight: 500; font-family: inherit; box-shadow: inset 0 0 0 1px var(--field); outline: none; transition: box-shadow .15s; }
+  .field::placeholder { color: var(--muted); }
+  .field:focus { box-shadow: inset 0 0 0 2px var(--ink); }
+  select.field option { color: #303b4b; }
+
+  .fbtn { background: transparent; color: var(--body); border-radius: 6px; padding: 8px 14px; font-weight: 700; font-size: 14px; cursor: pointer; border: 0; font-family: inherit; transition: background .15s; white-space: nowrap; }
+  .fbtn:hover { background: var(--hover); }
+  .fbtn.on { background: var(--slate); color: #fff; }
+  .dark .fbtn.on { background: var(--slate2); }
+  .bnav { background: var(--slate); }
+  .bnav .fbtn { color: var(--mist); font-size: 12px; padding: 9px 4px; }
+  .bnav .fbtn:hover { background: var(--slate2); }
+  .bnav .fbtn.on { background: var(--slate2); color: #fff; }
+
+  /* ----- الحالات ----- */
+  .chip { display: inline-flex; align-items: center; gap: 6px; border-radius: 6px; padding: 3px 10px; font-size: 12px; font-weight: 700; white-space: nowrap; }
+  .chip.ok { background: var(--ok-bg); color: var(--ok); }
+  .chip.warn { background: var(--warn-bg); color: var(--warn); }
+  .chip.manual { background: var(--manual-bg); color: var(--manual); font-size: 11px; padding: 2px 8px; }
+  .cat-medical  { --c:#1d5fb8; --cb:#e3eefb; }
+  .cat-admin    { --c:#4a5361; --cb:#e8eaed; }
+  .cat-accident { --c:#b3261e; --cb:#fbe3e0; }
+  .dark .cat-medical  { --c:#8ab8ff; --cb:rgba(138,184,255,.15); }
+  .dark .cat-admin    { --c:#c3c8d0; --cb:rgba(195,200,208,.13); }
+  .dark .cat-accident { --c:#ff9a92; --cb:rgba(255,154,146,.15); }
+  .catsel { background: var(--cb); color: var(--c); border: 0; border-radius: 6px; padding: 3px 8px; font-family: inherit; font-weight: 700; font-size: 12px; cursor: pointer; max-width: 100%; outline: none; }
+  .catsel option { color: #303b4b; background: #fff; }
+  .cbtn.on.cat-medical, .cbtn.on.cat-admin, .cbtn.on.cat-accident { background: var(--cb); color: var(--c); box-shadow: inset 0 0 0 1.5px var(--c); }
+  .bar { position: absolute; top: 0; bottom: 0; right: 0; width: 4px; }
+  .bar.ok { background: var(--ok-bar); } .bar.warn { background: var(--warn-bar); }
+  .prog { height: 6px; border-radius: 3px; background: var(--board); overflow: hidden; }
+  .prog > div { height: 100%; background: var(--ok-bar); border-radius: 3px; transition: width .7s; }
+
+  /* ----- الجدول ----- */
+  table.t { width: 100%; table-layout: fixed; border-collapse: collapse; font-size: 14px; text-align: right; }
+  table.t thead th { background: var(--slate); color: #fff; padding: 13px 12px; font-weight: 700; position: sticky; top: 0; z-index: 5; }
+  table.t thead th[data-sort] { cursor: pointer; user-select: none; }
+  table.t thead th[data-sort]:hover { background: var(--slate2); }
+  table.t tbody td { padding: 14px 12px; border-top: 1px solid var(--line); vertical-align: top; }
+  table.t tbody tr:hover { background: var(--hover); }
+
+  .ltr-num { direction: ltr; unicode-bidi: plaintext; display: inline-block; }
+  .tel { color: var(--ink); font-weight: 700; text-decoration: none; }
+  .tel:hover { text-decoration: underline; }
+  .mrn { background: var(--board); color: var(--ink); font-weight: 700; padding: 1px 8px; border-radius: 4px; font-size: 13px; }
+
+  .pulse-dot { animation: pulse 1.6s infinite; }
+  @keyframes pulse { 0%{opacity:1; transform:scale(1)} 50%{opacity:.45; transform:scale(1.25)} 100%{opacity:1; transform:scale(1)} }
+  .spin { animation: spin .9s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .fade-in { animation: fadeIn .3s ease both; }
+  @keyframes fadeIn { from { opacity:0; transform: translateY(6px);} to { opacity:1; transform:none; } }
+  #toast { transition: opacity .25s, transform .25s; }
+  th[data-sort] .sort-ic { opacity: .6; margin-right: 4px; font-size: 11px; }
+</style>
+</head>
+
+<body>
+
+<!-- ===================== الترويسة ===================== -->
+<header class="band">
+  <div class="max-w-7xl mx-auto px-4">
+    <!-- الشريط العلوي -->
+    <div class="flex items-center justify-between gap-3 py-3 flex-wrap">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-lg flex items-center justify-center text-lg" style="background:var(--slate2)"><i class="fa-solid fa-hospital-user"></i></div>
+        <div class="font-bold text-sm leading-tight">KSAMC<div class="text-xs font-medium" style="color:var(--mist)">قسم التأمين الطبي</div></div>
+      </div>
+      <div class="flex items-center gap-2 flex-wrap">
+        <div class="pill-conn"><span id="connDot" class="w-2.5 h-2.5 rounded-full pulse-dot" style="background:#f2b84b"></span><span id="connText">جارٍ الاتصال...</span></div>
+        <span class="hidden sm:inline text-xs" style="color:var(--mist)">آخر تحديث: <b id="lastUpdate" class="text-white">—</b></span>
+        <button id="refreshBtn" class="nav-btn"><i id="refreshIcon" class="fa-solid fa-rotate"></i><span class="hidden sm:inline">تحديث</span></button>
+        <button id="themeBtn" class="nav-btn nav-icon" title="الوضع الليلي / النهاري"><i id="themeIcon" class="fa-solid fa-moon"></i></button>
+        <div class="relative">
+          <button id="settingsBtn" class="nav-btn nav-icon" title="الإعدادات"><i class="fa-solid fa-gear"></i></button>
+          <div id="settingsPanel" class="hidden absolute left-0 mt-2 w-72 z-50 card float p-4 text-sm" style="color:var(--body)">
+            <div class="font-bold mb-3 ttl"><i class="fa-brands fa-whatsapp ml-1" style="color:#1fa855"></i> تطبيق الواتساب</div>
+            <label class="flex items-center gap-2 mb-2 cursor-pointer"><input type="radio" name="waApp" value="business" class="accent-emerald-600"><span>واتساب بزنس (WhatsApp Business)</span></label>
+            <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="waApp" value="regular" class="accent-emerald-600"><span>واتساب العادي</span></label>
+            <p class="text-xs mt-3 leading-relaxed" style="color:var(--muted)">على أندرويد يفتح البزنس مباشرة. على الآيفون وأجهزة الكمبيوتر يحدد النظام التطبيق الافتراضي.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- العنوان الرئيسي -->
+    <div class="text-center pt-8 pb-24 lg:pt-12 lg:pb-28">
+      <h1 class="serif font-bold text-3xl lg:text-6xl leading-tight" style="color:#fff">لوحة متابعة طلبات التأمين الطبي</h1>
+      <p class="mt-3 text-base lg:text-xl" style="color:var(--mist)">مدينة الملك سلمان الطبية — الطلبات والمستندات والتواصل مع المرضى في مكان واحد</p>
+    </div>
+  </div>
+</header>
+
+<main class="max-w-7xl mx-auto px-3 sm:px-4 pb-6">
+
+  <!-- ===================== المؤشرات (تطفو فوق الترويسة) ===================== -->
+  <section class="grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-4 relative z-10" style="margin-top:-72px">
+    <div class="card float p-4 lg:p-5">
+      <div class="flex items-center justify-between mb-3"><span class="kpi-lbl">إجمالي السجلات</span><i class="fa-solid fa-folder-open" style="color:var(--muted)"></i></div>
+      <div id="kpiTotal" class="kpi-num">0</div>
+    </div>
+    <div class="card float p-4 lg:p-5">
+      <div class="flex items-center justify-between mb-3"><span class="kpi-lbl">تحت الإجراء</span><i class="fa-solid fa-hourglass-half" style="color:var(--warn-bar)"></i></div>
+      <div id="kpiPending" class="kpi-num">0</div>
+    </div>
+    <div class="card float p-4 lg:p-5">
+      <div class="flex items-center justify-between mb-3"><span class="kpi-lbl">تم الإنجاز</span><i class="fa-solid fa-circle-check" style="color:var(--ok-bar)"></i></div>
+      <div id="kpiDone" class="kpi-num">0</div>
+    </div>
+    <div class="card float p-4 lg:p-5">
+      <div class="flex items-center justify-between mb-3"><span class="kpi-lbl">نسبة الإنجاز</span><span id="kpiPct" class="serif font-bold text-xl ttl">0%</span></div>
+      <div class="prog"><div id="kpiBar" style="width:0%"></div></div>
+      <div class="text-[11px] mt-2" style="color:var(--muted)" id="kpiNoPhone">—</div>
+    </div>
+  </section>
+
+  <!-- ===================== البحث والتصفية ===================== -->
+  <section class="mt-8 lg:mt-12">
+    <div class="flex flex-col lg:flex-row gap-3 lg:items-center lg:justify-between">
+      <div class="relative w-full lg:max-w-md">
+        <i class="fa-solid fa-magnifying-glass absolute right-4 top-1/2 -translate-y-1/2" style="color:var(--muted)"></i>
+        <input id="searchInput" type="search" autocomplete="off" placeholder="ابحث بالاسم أو الملف أو الجوال أو المستندات..." class="field" style="padding-right:42px">
+      </div>
+      <div class="flex items-center gap-2 flex-wrap">
+        <div class="hidden lg:flex items-center gap-1 flex-wrap">
+          <button data-filter="all" class="fbtn">الكل <span data-cnt="all" class="text-xs opacity-70">0</span></button>
+          <button data-filter="pending" class="fbtn">تحت الإجراء <span data-cnt="pending" class="text-xs opacity-70">0</span></button>
+          <button data-filter="done" class="fbtn">تم الإنجاز <span data-cnt="done" class="text-xs opacity-70">0</span></button>
+          <button data-filter="nophone" class="fbtn">بدون جوال <span data-cnt="nophone" class="text-xs opacity-70">0</span></button>
+          <button data-filter="manual" class="fbtn">يدوية <span data-cnt="manual" class="text-xs opacity-70">0</span></button>
+        </div>
+        <button id="exportBtn" class="btn btn-outline flex-1 lg:flex-none"><i class="fa-solid fa-file-csv"></i><span>تصدير</span></button>
+        <button data-act="add" class="btn btn-orange hidden lg:inline-flex"><i class="fa-solid fa-plus"></i><span>إضافة طلب</span></button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== التصنيفات الذكية ===================== -->
+  <section id="catBar" class="mt-3 grid grid-cols-2 sm:grid-cols-4 gap-2">
+    <button data-cat="all" class="fbtn cbtn" style="box-shadow:inset 0 0 0 1px var(--line)"><i class="fa-solid fa-layer-group ml-1"></i>كل التصنيفات <span data-ccnt="all" class="text-xs opacity-70">0</span></button>
+    <button data-cat="medical" class="fbtn cbtn cat-medical" style="box-shadow:inset 0 0 0 1px var(--line)"><i class="fa-solid fa-stethoscope ml-1"></i>طبية <span data-ccnt="medical" class="text-xs opacity-70">0</span></button>
+    <button data-cat="admin" class="fbtn cbtn cat-admin" style="box-shadow:inset 0 0 0 1px var(--line)"><i class="fa-solid fa-file-lines ml-1"></i>إدارية <span data-ccnt="admin" class="text-xs opacity-70">0</span></button>
+    <button data-cat="accident" class="fbtn cbtn cat-accident" style="box-shadow:inset 0 0 0 1px var(--line)"><i class="fa-solid fa-triangle-exclamation ml-1"></i>حوادث وإصابات <span data-ccnt="accident" class="text-xs opacity-70">0</span></button>
+  </section>
+
+  <!-- ===================== الجوال والتابلت: بطاقات ===================== -->
+  <section id="cards" class="lg:hidden grid grid-cols-1 md:grid-cols-2 gap-3 mt-5"></section>
+
+  <!-- ===================== الشاشات الكبيرة: جدول ===================== -->
+  <section class="hidden lg:block card float overflow-hidden mt-5" style="border-radius:10.26px">
+    <table class="t">
+      <colgroup>
+        <col style="width:4%"><col style="width:16%"><col style="width:9%"><col style="width:12%">
+        <col style="width:22%"><col style="width:15%"><col style="width:11%"><col style="width:11%">
+      </colgroup>
+      <thead>
+        <tr>
+          <th data-sort="idx">#<i class="sort-ic fa-solid fa-sort"></i></th>
+          <th data-sort="name">اسم المريض<i class="sort-ic fa-solid fa-sort"></i></th>
+          <th data-sort="mrn">الملف (MRN)<i class="sort-ic fa-solid fa-sort"></i></th>
+          <th>الجوال</th>
+          <th>المطلوب / الملاحظات</th>
+          <th data-sort="status">الحالة<i class="sort-ic fa-solid fa-sort"></i></th>
+          <th style="text-align:center">واتساب</th>
+          <th style="text-align:center">إجراءات</th>
+        </tr>
+      </thead>
+      <tbody id="tbody"></tbody>
+    </table>
+  </section>
+
+  <div id="emptyState" class="hidden card py-14 text-center mt-5" style="color:var(--muted)">
+    <i class="fa-regular fa-folder-open text-5xl mb-3"></i>
+    <p class="font-semibold">لا توجد نتائج مطابقة</p>
+  </div>
+
+  <div id="loadingState" class="card py-14 text-center mt-5" style="color:var(--muted)">
+    <i class="fa-solid fa-circle-notch spin text-4xl mb-3"></i>
+    <p class="font-semibold">جارٍ تحميل البيانات...</p>
+  </div>
+
+  <div id="moreWrap" class="hidden text-center mt-4">
+    <button id="moreBtn" class="btn btn-outline"></button>
+  </div>
+
+  <div class="text-xs flex flex-wrap items-center justify-between gap-2 px-1 mt-4" style="color:var(--muted)">
+    <span>يعرض <b id="shownCount">0</b> من <b id="matchCount">0</b> نتيجة (الإجمالي <b id="totalCount">0</b>)</span>
+    <span><i class="fa-solid fa-clock-rotate-left ml-1"></i> تحديث تلقائي كل 60 ثانية</span>
+  </div>
+</main>
+
+<footer class="band mt-8 hidden lg:block">
+  <div class="max-w-7xl mx-auto px-4 py-8 text-center text-sm" style="color:var(--mist)">
+    لوحة متابعة التأمين الطبي — مدينة الملك سلمان الطبية (KSAMC)
+  </div>
+</footer>
+
+<!-- شريط الفلاتر السفلي للجوال -->
+<nav class="bnav lg:hidden fixed bottom-0 inset-x-0 z-40 px-2 py-2 flex gap-1">
+  <button data-filter="all" class="fbtn flex-1">الكل <span data-cnt="all" class="opacity-70">0</span></button>
+  <button data-filter="pending" class="fbtn flex-1">تحت الإجراء <span data-cnt="pending" class="opacity-70">0</span></button>
+  <button data-filter="done" class="fbtn flex-1">منجز <span data-cnt="done" class="opacity-70">0</span></button>
+  <button data-filter="nophone" class="fbtn flex-1">بدون جوال <span data-cnt="nophone" class="opacity-70">0</span></button>
+  <button data-filter="manual" class="fbtn flex-1">يدوية <span data-cnt="manual" class="opacity-70">0</span></button>
+</nav>
+
+<!-- زر الإضافة العائم للجوال -->
+<button data-act="add" aria-label="إضافة طلب جديد" class="lg:hidden fixed bottom-20 left-4 z-40 w-14 h-14 rounded-full text-white text-2xl flex items-center justify-center" style="background:var(--orange); box-shadow: var(--shadow-float)">
+  <i class="fa-solid fa-plus"></i>
+</button>
+
+<!-- ===================== نافذة إضافة / تعديل طلب ===================== -->
+<div id="modal" class="hidden fixed inset-0 z-[90] flex items-end sm:items-center justify-center p-0 sm:p-4" style="background:rgba(40,50,63,.6)">
+  <form id="reqForm" novalidate class="card float w-full sm:max-w-lg max-h-[92vh] overflow-y-auto p-6 space-y-4" style="border-radius:16px 16px 0 0">
+    <div class="flex items-center justify-between">
+      <h2 id="modalTitle" class="serif font-bold text-2xl">إضافة طلب جديد</h2>
+      <button type="button" data-act="close-modal" aria-label="إغلاق" class="icon-btn"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+
+    <div>
+      <label class="block text-sm font-semibold mb-1 ttl" for="fName">اسم المريض <span style="color:#d64545">*</span></label>
+      <input id="fName" class="field" autocomplete="off" placeholder="الاسم الكامل">
+      <p id="eName" class="hidden text-xs mt-1" style="color:#d64545">اسم المريض مطلوب.</p>
+    </div>
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+      <div>
+        <label class="block text-sm font-semibold mb-1 ttl" for="fMrn">رقم الملف الطبي (MRN)</label>
+        <input id="fMrn" class="field" inputmode="numeric" autocomplete="off" placeholder="1048231" dir="ltr" style="text-align:right">
+      </div>
+      <div>
+        <label class="block text-sm font-semibold mb-1 ttl" for="fPhone">رقم الجوال</label>
+        <input id="fPhone" class="field" inputmode="tel" autocomplete="off" placeholder="0501234567" dir="ltr" style="text-align:right">
+        <p id="ePhone" class="hidden text-xs mt-1" style="color:#d64545">رقم الجوال غير صالح. مثال: 0501234567</p>
+      </div>
+    </div>
+
+    <div>
+      <label class="block text-sm font-semibold mb-1 ttl" for="fDocs">المستندات / المطلوب</label>
+      <textarea id="fDocs" rows="2" class="field" placeholder="مثال: صورة بطاقة التأمين + تقرير طبي"></textarea>
+    </div>
+
+    <div>
+      <label class="block text-sm font-semibold mb-1 ttl" for="fStatus">حالة الطلب</label>
+      <select id="fStatus" class="field">
+        <option value="تحت الإجراء">تحت الإجراء</option>
+        <option value="تم الإنجاز">تم الإنجاز</option>
+      </select>
+    </div>
+
+    <div>
+      <label class="block text-sm font-semibold mb-1 ttl" for="fCat">التصنيف</label>
+      <select id="fCat" class="field">
+        <option value="">تلقائي (حسب المستندات والملاحظات)</option>
+        <option value="medical">طبية</option>
+        <option value="admin">إدارية</option>
+        <option value="accident">حوادث وإصابات عمل</option>
+      </select>
+    </div>
+
+    <div>
+      <label class="block text-sm font-semibold mb-1 ttl" for="fNotes">ملاحظات</label>
+      <textarea id="fNotes" rows="2" class="field" placeholder="اختياري"></textarea>
+    </div>
+
+    <p class="text-xs leading-relaxed" style="color:var(--muted)">
+      <i class="fa-solid fa-circle-info ml-1"></i>
+      الطلبات اليدوية تُحفظ على هذا الجهاز وهذا المتصفح فقط، ولا تُكتب في Google Sheets. استخدم زر «نسخ كصف» لنقلها إلى الشيت.
+    </p>
+
+    <div class="flex gap-2 pt-1">
+      <button type="submit" class="btn btn-orange flex-1"><i class="fa-solid fa-floppy-disk"></i><span id="saveLabel">حفظ الطلب</span></button>
+      <button type="button" data-act="close-modal" class="btn btn-outline">إلغاء</button>
+    </div>
+  </form>
+</div>
+
+<div id="toast" class="fixed bottom-24 lg:bottom-6 left-1/2 -translate-x-1/2 translate-y-4 opacity-0 pointer-events-none z-[100] px-5 py-2.5 rounded-md text-sm font-bold" style="background:var(--slate); color:#fff; box-shadow:var(--shadow-float)"></div>
+
+<script>
+/* =====================================================================
+   الإعدادات
+   ===================================================================== */
+const CONFIG = {
+  SPREADSHEET_ID: '135L6yG_lk5HPj77mZbUqv3-oZNWWd4T5N6yR6hX3Wk0',
+  SHEET_NAME: '',
+  SHEET_GID: '',
+  REFRESH_MS: 60000,
+  PAGE_SIZE: 30,
+  HOSPITAL_NAME: 'مدينة الملك سلمان الطبية',
+  MANUAL_KEY: 'ksamc-manual-v1'
+};
+
+const DEMO_DATA = [
+  { name: 'محمد عبدالله القحطاني', mrn: '1048231', docs: 'صورة بطاقة التأمين + تقرير طبي', status: 'تحت الإجراء', phone: '0501234567', notes: 'بانتظار موافقة شركة التأمين' },
+  { name: 'فاطمة سعد الحربي',     mrn: '1048976', docs: 'نتائج الفحوصات المخبرية',        status: 'تم الإنجاز',  phone: '0559876543', notes: 'تمت الموافقة' },
+  { name: 'خالد إبراهيم العتيبي', mrn: '1049012', docs: 'تقرير الأشعة + خطاب التحويل',    status: 'تحت الإجراء', phone: '966541112233', notes: 'مطلوب استكمال التقرير' },
+  { name: 'نورة علي الشهري',      mrn: '1049457', docs: 'صورة الهوية الوطنية',            status: 'تم الإنجاز',  phone: '0533344556', notes: '' },
+  { name: 'عبدالرحمن يوسف الزهراني', mrn: '1050123', docs: 'نموذج الموافقة المسبقة',      status: 'تحت الإجراء', phone: '',           notes: 'لا يوجد رقم جوال مسجل' }
+];
+
+/* =====================================================================
+   الحالة العامة
+   ===================================================================== */
+/* =====================================================================
+   التصنيف التلقائي للطلبات
+   - إدارية: مستندات مطلوبة من المريض (هوية، بطاقة تأمين، موافقات...)
+   - طبية: طلبات من المستشفى (تقارير، نتائج، كتلة الجسم...)
+   - حوادث وإصابات عمل: تقرير حادث أو بلاغ إصابة
+   عدّل الكلمات هنا لتناسب صياغة سجلك (تُكتب بدون تشكيل).
+   ===================================================================== */
+const CATEGORIES = {
+  medical:  { label: 'طبية' },
+  admin:    { label: 'إدارية' },
+  accident: { label: 'حوادث وإصابات عمل' }
+};
+const CATEGORY_RULES = {
+  accident: ['حادث', 'حوادث', 'اصابه', 'اصابات', 'بلاغ', 'مروري', 'سقوط', 'شرطه', 'حريق', 'كدمه', 'كسر عمل'],
+  medical:  ['كتله الجسم', 'bmi', 'وزن', 'طول', 'تقرير طبي', 'تقرير', 'نتائج', 'نتيجه', 'فحوصات', 'فحص', 'تحاليل', 'تحليل', 'مخبر', 'اشعه', 'اشعة', 'تشخيص', 'ملخص خروج', 'ملخص', 'تنويم', 'خطه علاجيه', 'وصفه', 'عمليه', 'جراحه', 'علاج', 'رنين', 'اسعاف', 'طبي', 'طبيه'],
+  admin:    ['بطاقه', 'هويه', 'اقامه', 'جواز', 'خطاب', 'تحويل', 'موافقه', 'تفويض', 'نموذج', 'استماره', 'صوره', 'توقيع', 'ايبان', 'حساب', 'عقد', 'كفيل', 'سجل مدني', 'شهاده ميلاد', 'دفتر العائله', 'اثبات', 'تامين']
+};
+
+function classifyCategory(text) {
+  const t = normalizeText(text);
+  const hit = (list) => list.reduce((n, k) => n + (t.includes(normalizeText(k)) ? 1 : 0), 0);
+  if (hit(CATEGORY_RULES.accident) > 0) return 'accident';
+  return hit(CATEGORY_RULES.medical) > hit(CATEGORY_RULES.admin) ? 'medical' : 'admin';
+}
+
+let catOverrides = {};
+let activeCat = 'all';
+function catKey(row) { return 'k:' + (row.mrn || normalizeText(row.name)); }
+function loadOverrides() {
+  try { const o = JSON.parse(STORE.get('ksamc-cat-v1', '{}')); catOverrides = (o && typeof o === 'object') ? o : {}; } catch (e) { catOverrides = {}; }
+}
+function saveOverrides() { STORE.set('ksamc-cat-v1', JSON.stringify(catOverrides)); }
+
+let sheetRaw = [];
+let manualRaw = [];
+let allRows = [];
+let activeFilter = 'all';
+let searchTerm = '';
+let sortKey = 'idx';
+let sortDir = 1;
+let visibleLimit = CONFIG.PAGE_SIZE;
+let isDemo = false;
+let isFetching = false;
+let editingId = null;
+
+const $ = (id) => document.getElementById(id);
+
+const STORE = {
+  get(k, d) { try { const v = localStorage.getItem(k); return v === null ? d : v; } catch (e) { return d; } },
+  set(k, v) { try { localStorage.setItem(k, v); return true; } catch (e) { return false; } }
+};
+
+let waApp = STORE.get('ksamc-wa-app', 'business');
+
+/* =====================================================================
+   أدوات مساعدة
+   ===================================================================== */
+function escapeHtml(str) {
+  return String(str ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+}
+
+function arabicToEnglishDigits(str) {
+  return String(str ?? '')
+    .replace(/[٠-٩]/g, (d) => '٠١٢٣٤٥٦٧٨٩'.indexOf(d))
+    .replace(/[۰-۹]/g, (d) => '۰۱۲۳۴۵۶۷۸۹'.indexOf(d));
+}
+
+function normalizeText(str) {
+  return arabicToEnglishDigits(String(str ?? ''))
+    .toLowerCase()
+    .replace(/[\u064B-\u065F\u0670\u0640]/g, '')
+    .replace(/[أإآ]/g, 'ا')
+    .replace(/ى/g, 'ي')
+    .replace(/ة/g, 'ه')
+    .trim();
+}
+
+function formatPhone(raw) {
+  if (!raw) return '';
+  let d = arabicToEnglishDigits(String(raw)).replace(/\D/g, '');
+  if (!d) return '';
+  if (d.startsWith('00')) d = d.slice(2);
+  if (d.startsWith('966')) {
+    d = d.slice(3);
+    if (d.startsWith('0')) d = d.slice(1);
+    return d.length === 9 ? '966' + d : '';
+  }
+  if (d.startsWith('05') && d.length === 10) return '966' + d.slice(1);
+  if (d.startsWith('5') && d.length === 9) return '966' + d;
+  if (d.length >= 10 && d.length <= 15 && !d.startsWith('0')) return d;
+  return '';
+}
+
+function extractPhone(raw) {
+  if (!raw) return '';
+  const parts = String(raw).split(/[\/،,;\n]+/);
+  for (const p of parts) {
+    const f = formatPhone(p);
+    if (f) return f;
+  }
+  return formatPhone(raw);
+}
+
+function phoneDisplay(row) {
+  if (row.phoneIntl) return row.phoneIntl.startsWith('966') ? '0' + row.phoneIntl.slice(3) : '+' + row.phoneIntl;
+  return row.phoneRaw || '';
+}
+
+function classifyStatus(text) {
+  const t = normalizeText(text);
+  if (!t) return 'pending';
+  const doneWords = ['انجاز', 'منجز', 'مكتمل', 'اكتمل', 'تم', 'موافق', 'معتمد', 'مقبول', 'done', 'complete', 'approved', 'closed', 'مغلق'];
+  const notDone = ['تحت الاجراء', 'قيد', 'جاري', 'جاريه', 'لم يتم', 'غير', 'معلق', 'منتظر', 'انتظار', 'pending', 'process', 'open'];
+  if (notDone.some((w) => t.includes(w))) return 'pending';
+  if (doneWords.some((w) => t.includes(w))) return 'done';
+  return 'pending';
+}
+
+function toast(msg) {
+  const t = $('toast');
+  t.textContent = msg;
+  t.classList.remove('opacity-0', 'translate-y-4');
+  clearTimeout(toast._t);
+  toast._t = setTimeout(() => t.classList.add('opacity-0', 'translate-y-4'), 2000);
+}
+
+async function copyText(text) {
+  try {
+    await navigator.clipboard.writeText(text);
+  } catch (e) {
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.position = 'fixed';
+    ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.select();
+    try { document.execCommand('copy'); } catch (_) {}
+    document.body.removeChild(ta);
+  }
+}
+
+/* =====================================================================
+   واتساب
+   ===================================================================== */
+function buildMessage(row) {
+  return `السلام عليكم ورحمة الله وبركاته،
+
+نفيدكم بأننا من قسم التأمين الطبي في ${CONFIG.HOSPITAL_NAME}.
+
+بخصوص المريض: ${row.name || '—'}
+رقم الملف الطبي: ${row.mrn || '—'}
+المستندات المطلوبة: ${row.docs || 'يرجى مراجعة قسم التأمين الطبي'}
+
+نأمل التكرم بتزويدنا بما ذُكر أعلاه لاستكمال إجراءات التأمين الطبي في أقرب وقت ممكن.
+
+شاكرين لكم حسن تعاونكم،
+قسم التأمين الطبي — ${CONFIG.HOSPITAL_NAME}`;
+}
+
+function buildWhatsAppLink(row) {
+  const phone = row.phoneIntl;
+  if (!phone) return { href: '', external: false };
+  const enc = encodeURIComponent(buildMessage(row));
+  const web = `https://wa.me/${phone}?text=${enc}`;
+  const isAndroid = /Android/i.test(navigator.userAgent);
+  if (waApp === 'business' && isAndroid) {
+    return {
+      href: `intent://send?phone=${phone}&text=${enc}#Intent;scheme=whatsapp;package=com.whatsapp.w4b;S.browser_fallback_url=${encodeURIComponent(web)};end`,
+      external: false
+    };
+  }
+  return { href: web, external: true };
+}
+
+/* =====================================================================
+   الطلبات اليدوية (تخزين محلي)
+   ===================================================================== */
+function loadManual() {
+  try {
+    const arr = JSON.parse(STORE.get(CONFIG.MANUAL_KEY, '[]'));
+    manualRaw = Array.isArray(arr) ? arr : [];
+  } catch (e) { manualRaw = []; }
+}
+
+function saveManual() {
+  const ok = STORE.set(CONFIG.MANUAL_KEY, JSON.stringify(manualRaw));
+  if (!ok) toast('تعذّر الحفظ على هذا المتصفح');
+}
+
+function newId() { return 'm' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6); }
+
+/* =====================================================================
+   جلب البيانات
+   ===================================================================== */
+function buildUrls() {
+  const id = CONFIG.SPREADSHEET_ID;
+  const bust = '&_=' + Date.now();
+  let sel = '';
+  if (CONFIG.SHEET_NAME) sel = '&sheet=' + encodeURIComponent(CONFIG.SHEET_NAME);
+  else if (CONFIG.SHEET_GID) sel = '&gid=' + encodeURIComponent(CONFIG.SHEET_GID);
+  return [
+    `https://docs.google.com/spreadsheets/d/${id}/gviz/tq?tqx=out:csv${sel}${bust}`,
+    `https://docs.google.com/spreadsheets/d/${id}/export?format=csv${CONFIG.SHEET_GID ? '&gid=' + encodeURIComponent(CONFIG.SHEET_GID) : ''}${bust}`
+  ];
+}
+
+async function fetchCsvText() {
+  const urls = buildUrls();
+  let lastErr = null;
+  for (const url of urls) {
+    try {
+      const ctrl = new AbortController();
+      const timer = setTimeout(() => ctrl.abort(), 15000);
+      const res = await fetch(url, { cache: 'no-store', signal: ctrl.signal });
+      clearTimeout(timer);
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      const text = await res.text();
+      if (/^\s*<(!doctype|html)/i.test(text)) throw new Error('الشيت غير متاح للعامة');
+      return text;
+    } catch (e) {
+      lastErr = e;
+    }
+  }
+  throw lastErr || new Error('تعذّر الجلب');
+}
+
+const COLUMN_KEYS = {
+  name:   ['اسم المريض', 'اسم', 'المريض', 'patient', 'name'],
+  mrn:    ['mrn', 'الملف الطبي', 'رقم الملف', 'ملف', 'file'],
+  docs:   ['المستندات', 'مستندات', 'المطلوب', 'المستند', 'documents', 'required'],
+  status: ['حالة الطلب', 'الحالة', 'حاله', 'status'],
+  phone:  ['الجوال', 'جوال', 'الهاتف', 'هاتف', 'موبايل', 'واتس', 'mobile', 'phone', 'whatsapp'],
+  notes:  ['الملاحظات', 'ملاحظات', 'ملاحظه', 'notes', 'note', 'remark']
+};
+
+function detectColumns(headerRow) {
+  const map = {};
+  const used = new Set();
+  const heads = headerRow.map((h) => normalizeText(h));
+  const order = ['mrn', 'phone', 'status', 'docs', 'notes', 'name'];
+  for (const key of order) {
+    for (let i = 0; i < heads.length; i++) {
+      if (used.has(i) || !heads[i]) continue;
+      if (COLUMN_KEYS[key].some((k) => heads[i].includes(normalizeText(k)))) {
+        map[key] = i;
+        used.add(i);
+        break;
+      }
+    }
+  }
+  return map;
+}
+
+function parseSheet(csvText) {
+  const parsed = Papa.parse(csvText, { skipEmptyLines: 'greedy' });
+  const rows = parsed.data;
+  if (!rows || !rows.length) return [];
+
+  let headerIdx = -1, map = {};
+  for (let i = 0; i < Math.min(6, rows.length); i++) {
+    const m = detectColumns(rows[i]);
+    if (Object.keys(m).length >= 3) { headerIdx = i; map = m; break; }
+  }
+  if (headerIdx === -1) {
+    headerIdx = 0;
+    map = { name: 1, mrn: 2, docs: 3, status: 4, phone: 5, notes: 6 };
+    const first = rows[0] || [];
+    if (first.length && first.length <= 6) map = { name: 0, mrn: 1, docs: 2, status: 3, phone: 4, notes: 5 };
+  }
+
+  const get = (r, key) => (map[key] !== undefined ? String(r[map[key]] ?? '').trim() : '');
+  const out = [];
+  for (let i = headerIdx + 1; i < rows.length; i++) {
+    const r = rows[i];
+    const rec = { name: get(r, 'name'), mrn: get(r, 'mrn'), docs: get(r, 'docs'), status: get(r, 'status'), phone: get(r, 'phone'), notes: get(r, 'notes') };
+    if (!rec.name && !rec.mrn && !rec.docs && !rec.status && !rec.phone && !rec.notes) continue;
+    out.push(rec);
+  }
+  return out;
+}
+
+function enrich(r, manual, uid) {
+  const statusKey = classifyStatus(r.status);
+  const row = {
+    uid,
+    manual,
+    name: r.name || '',
+    mrn: arabicToEnglishDigits(r.mrn || ''),
+    docs: r.docs || '',
+    statusText: r.status || (statusKey === 'done' ? 'تم الإنجاز' : 'تحت الإجراء'),
+    statusKey,
+    phoneRaw: r.phone || '',
+    phoneIntl: extractPhone(r.phone),
+    notes: r.notes || ''
+  };
+  row.catAuto = classifyCategory(row.docs + ' ' + row.notes);
+  const ov = manual ? (CATEGORIES[r.cat] ? r.cat : '') : (catOverrides[catKey(row)] || '');
+  row.cat = CATEGORIES[ov] ? ov : row.catAuto;
+  row.searchBlob = normalizeText([row.name, row.mrn, row.docs, row.statusText, row.phoneRaw, phoneDisplay(row), row.notes, manual ? 'يدوي' : '', CATEGORIES[row.cat].label].join(' '));
+  return row;
+}
+
+function rebuild() {
+  const sheetMrns = new Set(sheetRaw.map((r) => arabicToEnglishDigits(r.mrn || '')).filter(Boolean));
+  const manual = manualRaw.slice().reverse().map((r) => {
+    const row = enrich(r, true, r.id);
+    row.dupInSheet = !!(row.mrn && sheetMrns.has(row.mrn));
+    return row;
+  });
+  const sheet = sheetRaw.map((r, i) => enrich(r, false, 's' + i));
+  allRows = manual.concat(sheet);
+  allRows.forEach((r, i) => { r.idx = i + 1; });
+}
+
+/* =====================================================================
+   الواجهة
+   ===================================================================== */
+function setConn(state, text) {
+  $('connDot').style.background = state === 'live' ? '#5fd3a2' : state === 'error' ? '#ef6b6b' : '#f2b84b';
+  $('connText').textContent = text;
+}
+
+function showNotice(html) {
+  let n = $('notice');
+  if (!n) {
+    n = document.createElement('div');
+    n.id = 'notice';
+    n.className = 'card p-4 text-sm mt-6 fade-in';
+    n.style.cssText = 'background:var(--warn-bg); color:var(--warn)';
+    $('cards').parentNode.insertBefore(n, $('cards').previousElementSibling);
+  }
+  if (!html) { n.classList.add('hidden'); n.innerHTML = ''; return; }
+  n.innerHTML = html;
+  n.classList.remove('hidden');
+}
+
+function updateKPIs() {
+  const total = allRows.length;
+  const done = allRows.filter((r) => r.statusKey === 'done').length;
+  const pending = total - done;
+  const noPhone = allRows.filter((r) => !r.phoneIntl).length;
+  const manual = allRows.filter((r) => r.manual).length;
+  const pct = total ? Math.round((done / total) * 100) : 0;
+
+  $('kpiTotal').textContent = total;
+  $('kpiPending').textContent = pending;
+  $('kpiDone').textContent = done;
+  $('kpiPct').textContent = pct + '%';
+  $('kpiBar').style.width = pct + '%';
+  $('kpiNoPhone').textContent = noPhone ? `${noPhone} سجل بدون رقم جوال صالح` : 'جميع السجلات لها أرقام جوال';
+  $('totalCount').textContent = total;
+
+  const counts = { all: total, pending, done, nophone: noPhone, manual };
+  document.querySelectorAll('[data-cnt]').forEach((el) => { el.textContent = counts[el.dataset.cnt]; });
+
+  const cc = { all: total, medical: 0, admin: 0, accident: 0 };
+  allRows.forEach((r) => { cc[r.cat]++; });
+  document.querySelectorAll('[data-ccnt]').forEach((el) => { el.textContent = cc[el.dataset.ccnt]; });
+}
+
+function updateFilterButtons() {
+  document.querySelectorAll('.fbtn').forEach((btn) => {
+    if (btn.classList.contains('cbtn')) btn.classList.toggle('on', btn.dataset.cat === activeCat);
+    else btn.classList.toggle('on', btn.dataset.filter === activeFilter);
+  });
+}
+
+function updateSortIcons() {
+  document.querySelectorAll('th[data-sort]').forEach((th) => {
+    const ic = th.querySelector('.sort-ic');
+    if (!ic) return;
+    ic.className = 'sort-ic fa-solid ' + (th.dataset.sort === sortKey ? (sortDir === 1 ? 'fa-sort-up' : 'fa-sort-down') : 'fa-sort');
+  });
+}
+
+function statusChip(row) {
+  return row.statusKey === 'done'
+    ? `<span class="chip ok"><i class="fa-solid fa-circle-check"></i>${escapeHtml(row.statusText)}</span>`
+    : `<span class="chip warn"><i class="fa-solid fa-hourglass-half"></i>${escapeHtml(row.statusText)}</span>`;
+}
+
+function manualChip(row) {
+  if (!row.manual) return '';
+  const extra = row.dupInSheet ? ' · موجود في الشيت' : '';
+  return `<span class="chip manual"><i class="fa-solid fa-pen-to-square"></i> يدوي${extra}</span>`;
+}
+
+function phoneInline(row) {
+  if (row.phoneIntl) return `<a href="tel:+${row.phoneIntl}" class="tel ltr-num">${escapeHtml(phoneDisplay(row))}</a>`;
+  if (row.phoneRaw) return `<span class="ltr-num" style="color:#d64545" title="رقم غير صالح">${escapeHtml(row.phoneRaw)}</span>`;
+  return '<span style="color:var(--muted)">لا يوجد جوال</span>';
+}
+
+function waButtons(row, big) {
+  const wa = buildWhatsAppLink(row);
+  const label = waApp === 'business' ? 'بزنس' : '';
+  const cpMsg = `<button data-act="copy-msg" data-id="${row.uid}" title="نسخ نص الرسالة" class="icon-btn" style="${big ? 'width:46px;height:42px' : ''}"><i class="fa-regular fa-message"></i></button>`;
+  if (!wa.href) {
+    return big
+      ? `<span class="btn btn-off flex-1"><i class="fa-brands fa-whatsapp" style="font-size:19px"></i> لا يوجد جوال صالح</span>`
+      : `<span title="لا يوجد رقم جوال صالح" class="icon-btn" style="background:var(--board); color:var(--muted); cursor:not-allowed; box-shadow:none"><i class="fa-brands fa-whatsapp"></i></span>`;
+  }
+  const target = wa.external ? 'target="_blank" rel="noopener noreferrer"' : '';
+  const title = `فتح محادثة ${escapeHtml(row.name)} في واتساب ${label}`;
+  if (big) {
+    return `<a href="${wa.href}" ${target} title="${title}" class="btn btn-wa flex-1"><i class="fa-brands fa-whatsapp" style="font-size:19px"></i> واتساب ${label}</a>${cpMsg}`;
+  }
+  return `<div class="flex items-center justify-center gap-1.5">
+            <a href="${wa.href}" ${target} title="${title}" class="icon-btn" style="background:#1fa855; color:#fff; box-shadow:none"><i class="fa-brands fa-whatsapp" style="font-size:17px"></i></a>
+            ${cpMsg}
+          </div>`;
+}
+
+function catSelect(row) {
+  const opts = Object.keys(CATEGORIES).map((k) => `<option value="${k}" ${row.cat === k ? 'selected' : ''}>${CATEGORIES[k].label}</option>`).join('');
+  const note = row.catAuto !== row.cat ? ' — معدّل يدوياً' : ' — تلقائي';
+  return `<select data-catsel data-id="${row.uid}" class="catsel cat-${row.cat}" title="تصنيف الطلب${note} (اضغط للتعديل)">${opts}</select>`;
+}
+
+function rowActions(row) {
+  const b = (act, icon, title, cls) => `<button data-act="${act}" data-id="${row.uid}" title="${title}" class="icon-btn ${cls || ''}"><i class="${icon}"></i></button>`;
+  if (!row.manual) return `<div class="flex items-center justify-center gap-1">${b('copy-row', 'fa-regular fa-clipboard', 'نسخ كصف للشيت')}</div>`;
+  const done = row.statusKey === 'done';
+  return `<div class="flex items-center justify-center gap-1 flex-wrap">
+    ${b('toggle', done ? 'fa-solid fa-rotate-left' : 'fa-solid fa-check', done ? 'إعادة إلى تحت الإجراء' : 'تم الإنجاز', done ? '' : 'good')}
+    ${b('edit', 'fa-solid fa-pen', 'تعديل')}
+    ${b('copy-row', 'fa-regular fa-clipboard', 'نسخ كصف للشيت')}
+    ${b('delete', 'fa-solid fa-trash', 'حذف', 'danger')}
+  </div>`;
+}
+
+function cardHtml(r) {
+  const done = r.statusKey === 'done';
+  return `
+  <article class="card relative overflow-hidden p-4 fade-in" style="padding-right:22px">
+    <span class="bar ${done ? 'ok' : 'warn'}"></span>
+    <div class="flex items-start justify-between gap-2 mb-2">
+      <div class="min-w-0">
+        <div class="serif font-bold text-xl leading-snug ttl">${escapeHtml(r.name) || '<span style="color:var(--muted)">بدون اسم</span>'}</div>
+        <div class="mt-1 flex items-center gap-2 flex-wrap">${manualChip(r)}${catSelect(r)}<span class="text-[11px]" style="color:var(--muted)">#${r.idx}</span></div>
+      </div>
+      ${statusChip(r)}
+    </div>
+    <div class="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm mb-2">
+      <span><i class="fa-solid fa-id-card ml-1" style="color:var(--muted)"></i><span class="mrn ltr-num">${escapeHtml(r.mrn) || '—'}</span></span>
+      <span><i class="fa-solid fa-phone ml-1" style="color:var(--muted)"></i>${phoneInline(r)}</span>
+    </div>
+    ${r.docs ? `<div class="text-sm mb-1"><span style="color:var(--muted)">المطلوب: </span><span class="ttl">${escapeHtml(r.docs)}</span></div>` : ''}
+    ${r.notes ? `<div class="text-sm mb-1" style="color:var(--body)">${escapeHtml(r.notes)}</div>` : ''}
+    <div class="flex items-center gap-2 mt-3">${waButtons(r, true)}</div>
+    <div class="mt-2">${rowActions(r)}</div>
+  </article>`;
+}
+
+function rowHtml(r) {
+  return `
+  <tr>
+    <td style="color:var(--muted); font-weight:600">${r.idx}</td>
+    <td>
+      <div class="font-bold ttl break-words">${escapeHtml(r.name) || '<span style="color:var(--muted)">—</span>'}</div>
+      ${r.manual ? `<div class="mt-1">${manualChip(r)}</div>` : ''}
+    </td>
+    <td><span class="mrn ltr-num">${escapeHtml(r.mrn) || '—'}</span></td>
+    <td>
+      ${phoneInline(r)}
+      ${r.phoneIntl ? `<button data-act="copy-phone" data-id="${r.uid}" title="نسخ الرقم" class="mr-1" style="color:var(--muted)"><i class="fa-regular fa-copy"></i></button>` : ''}
+    </td>
+    <td>
+      <div class="break-words ttl">${escapeHtml(r.docs) || '<span style="color:var(--muted)">—</span>'}</div>
+      ${r.notes ? `<div class="text-xs mt-1 break-words" style="color:var(--body)">${escapeHtml(r.notes)}</div>` : ''}
+    </td>
+    <td>${statusChip(r)}<div class="mt-2">${catSelect(r)}</div></td>
+    <td>${waButtons(r, false)}</td>
+    <td>${rowActions(r)}</td>
+  </tr>`;
+}
+
+function getFilteredRows() {
+  const q = normalizeText(searchTerm);
+  let rows = allRows.filter((r) => {
+    if (activeFilter === 'pending' && r.statusKey !== 'pending') return false;
+    if (activeFilter === 'done' && r.statusKey !== 'done') return false;
+    if (activeFilter === 'nophone' && r.phoneIntl) return false;
+    if (activeFilter === 'manual' && !r.manual) return false;
+    if (activeCat !== 'all' && r.cat !== activeCat) return false;
+    if (q && !r.searchBlob.includes(q)) return false;
+    return true;
+  });
+
+  rows = rows.slice().sort((a, b) => {
+    let res = 0;
+    if (sortKey === 'idx') res = a.idx - b.idx;
+    else if (sortKey === 'status') res = (a.statusKey === b.statusKey ? 0 : a.statusKey === 'pending' ? -1 : 1);
+    else res = String(a[sortKey] || '').localeCompare(String(b[sortKey] || ''), 'ar', { numeric: true });
+    if (res === 0) res = a.idx - b.idx;
+    return res * sortDir;
+  });
+  return rows;
+}
+
+function renderTable() {
+  const filtered = getFilteredRows();
+  const shown = filtered.slice(0, visibleLimit);
+
+  $('cards').innerHTML = shown.map(cardHtml).join('');
+  $('tbody').innerHTML = shown.map(rowHtml).join('');
+
+  $('shownCount').textContent = shown.length;
+  $('matchCount').textContent = filtered.length;
+
+  const loading = !$('loadingState').classList.contains('hidden');
+  $('emptyState').classList.toggle('hidden', loading || filtered.length > 0);
+
+  const remaining = filtered.length - shown.length;
+  $('moreWrap').classList.toggle('hidden', remaining <= 0);
+  if (remaining > 0) $('moreBtn').textContent = `عرض المزيد (${remaining} متبقٍ)`;
+}
+
+function renderAll() {
+  updateKPIs();
+  updateFilterButtons();
+  updateSortIcons();
+  renderTable();
+}
+
+function stamp() {
+  $('lastUpdate').textContent = new Date().toLocaleTimeString('ar-SA', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+}
+
+/* =====================================================================
+   تصدير CSV
+   ===================================================================== */
+function exportCsv() {
+  const rows = getFilteredRows();
+  if (!rows.length) { toast('لا توجد بيانات للتصدير'); return; }
+  const head = ['#', 'اسم المريض', 'MRN', 'رقم الجوال', 'المستندات / المطلوب', 'الحالة', 'التصنيف', 'الملاحظات', 'المصدر'];
+  const esc = (v) => '"' + String(v ?? '').replace(/"/g, '""') + '"';
+  const lines = [head.map(esc).join(',')].concat(
+    rows.map((r) => [r.idx, r.name, r.mrn, phoneDisplay(r), r.docs, r.statusText, CATEGORIES[r.cat].label, r.notes, r.manual ? 'يدوي' : 'الشيت'].map(esc).join(','))
+  );
+  const blob = new Blob(['\uFEFF' + lines.join('\r\n')], { type: 'text/csv;charset=utf-8;' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  const d = new Date();
+  a.download = `insurance-requests-${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}.csv`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+  toast(`تم تصدير ${rows.length} سجل`);
+}
+
+/* =====================================================================
+   نافذة إضافة / تعديل
+   ===================================================================== */
+function openModal(id) {
+  editingId = id || null;
+  const rec = id ? manualRaw.find((m) => m.id === id) : null;
+  $('modalTitle').textContent = rec ? 'تعديل الطلب' : 'إضافة طلب جديد';
+  $('saveLabel').textContent = rec ? 'حفظ التعديلات' : 'حفظ الطلب';
+  $('fName').value = rec ? rec.name : '';
+  $('fMrn').value = rec ? rec.mrn : '';
+  $('fPhone').value = rec ? rec.phone : '';
+  $('fDocs').value = rec ? rec.docs : '';
+  $('fStatus').value = rec ? (classifyStatus(rec.status) === 'done' ? 'تم الإنجاز' : 'تحت الإجراء') : 'تحت الإجراء';
+  $('fNotes').value = rec ? rec.notes : '';
+  $('fCat').value = rec ? (rec.cat || '') : '';
+  $('eName').classList.add('hidden');
+  $('ePhone').classList.add('hidden');
+  $('modal').classList.remove('hidden');
+  document.body.style.overflow = 'hidden';
+  setTimeout(() => $('fName').focus(), 50);
+}
+
+function closeModal() {
+  $('modal').classList.add('hidden');
+  document.body.style.overflow = '';
+  editingId = null;
+}
+
+$('reqForm').addEventListener('submit', (e) => {
+  e.preventDefault();
+  const name = $('fName').value.trim();
+  const phone = $('fPhone').value.trim();
+  let ok = true;
+
+  $('eName').classList.toggle('hidden', !!name);
+  if (!name) ok = false;
+
+  const phoneBad = phone !== '' && !extractPhone(phone);
+  $('ePhone').classList.toggle('hidden', !phoneBad);
+  if (phoneBad) ok = false;
+
+  if (!ok) return;
+
+  const data = {
+    name,
+    mrn: arabicToEnglishDigits($('fMrn').value.trim()),
+    phone,
+    docs: $('fDocs').value.trim(),
+    status: $('fStatus').value,
+    notes: $('fNotes').value.trim(),
+    cat: $('fCat').value
+  };
+
+  if (editingId) {
+    const i = manualRaw.findIndex((m) => m.id === editingId);
+    if (i > -1) manualRaw[i] = Object.assign({}, manualRaw[i], data);
+    toast('تم حفظ التعديلات');
+  } else {
+    manualRaw.push(Object.assign({ id: newId(), createdAt: Date.now() }, data));
+    toast('تمت إضافة الطلب');
+  }
+  saveManual();
+  closeModal();
+  rebuild();
+  renderAll();
+});
+
+$('modal').addEventListener('click', (e) => { if (e.target === $('modal')) closeModal(); });
+
+/* =====================================================================
+   دورة التحميل
+   ===================================================================== */
+async function loadData(manual = false) {
+  if (isFetching) return;
+  isFetching = true;
+  $('refreshIcon').classList.add('spin');
+  if (manual || !sheetRaw.length) setConn('loading', 'جارٍ التحديث...');
+
+  try {
+    const csv = await fetchCsvText();
+    sheetRaw = parseSheet(csv);
+    isDemo = false;
+    showNotice('');
+    setConn('live', 'متصل مباشرة');
+  } catch (err) {
+    console.warn('Sheet fetch failed:', err);
+    if (!sheetRaw.length || isDemo) {
+      sheetRaw = DEMO_DATA.slice();
+      isDemo = true;
+    }
+    setConn('error', isDemo ? 'غير متصل — بيانات توضيحية' : 'تعذّر التحديث');
+    showNotice(
+      `<div class="flex items-start gap-3">
+         <i class="fa-solid fa-triangle-exclamation mt-1"></i>
+         <div>
+           <b>تعذّر الاتصال بقوقل شيت.</b>
+           ${isDemo ? 'يتم عرض بيانات توضيحية مؤقتاً.' : 'يتم عرض آخر بيانات تم تحميلها.'}
+           <div class="text-xs mt-1 opacity-90">السبب: ${escapeHtml(err && err.message ? err.message : 'غير معروف')} — تأكد من مشاركة الشيت بصلاحية «أي شخص لديه الرابط – عارض»، وأنه ملف Google Sheets أصلي وليس Excel. ستتم إعادة المحاولة تلقائياً.</div>
+         </div>
+       </div>`
+    );
+  } finally {
+    $('loadingState').classList.add('hidden');
+    $('refreshIcon').classList.remove('spin');
+    stamp();
+    rebuild();
+    renderAll();
+    isFetching = false;
+  }
+}
+
+/* =====================================================================
+   الثيم
+   ===================================================================== */
+function applyTheme(dark) {
+  document.documentElement.classList.toggle('dark', dark);
+  $('themeIcon').className = dark ? 'fa-solid fa-sun' : 'fa-solid fa-moon';
+}
+
+$('themeBtn').addEventListener('click', () => {
+  const dark = !document.documentElement.classList.contains('dark');
+  applyTheme(dark);
+  STORE.set('ksamc-theme', dark ? 'dark' : 'light');
+});
+
+/* =====================================================================
+   الأحداث
+   ===================================================================== */
+$('searchInput').addEventListener('input', (e) => {
+  searchTerm = e.target.value;
+  visibleLimit = CONFIG.PAGE_SIZE;
+  renderTable();
+});
+
+document.addEventListener('click', async (e) => {
+  const fbtn = e.target.closest('.fbtn');
+  if (fbtn) {
+    if (fbtn.classList.contains('cbtn')) activeCat = fbtn.dataset.cat; else activeFilter = fbtn.dataset.filter;
+    visibleLimit = CONFIG.PAGE_SIZE;
+    updateFilterButtons();
+    renderTable();
+    return;
+  }
+
+  const btn = e.target.closest('[data-act]');
+  if (btn) {
+    const act = btn.dataset.act;
+    if (act === 'add') { openModal(); return; }
+    if (act === 'close-modal') { closeModal(); return; }
+
+    const row = allRows.find((r) => r.uid === btn.dataset.id);
+    if (!row) return;
+
+    if (act === 'copy-phone') {
+      await copyText(phoneDisplay(row));
+      toast('تم نسخ رقم الجوال');
+    } else if (act === 'copy-msg') {
+      await copyText(buildMessage(row));
+      toast('تم نسخ نص الرسالة');
+    } else if (act === 'copy-row') {
+      const line = [row.name, row.mrn, row.docs, row.statusText, phoneDisplay(row), row.notes].join('\t');
+      await copyText(line);
+      toast('تم نسخ الصف — الصقه في الشيت');
+    } else if (act === 'edit') {
+      openModal(row.uid);
+    } else if (act === 'toggle') {
+      const rec = manualRaw.find((m) => m.id === row.uid);
+      if (rec) {
+        rec.status = row.statusKey === 'done' ? 'تحت الإجراء' : 'تم الإنجاز';
+        saveManual();
+        rebuild();
+        renderAll();
+        toast(rec.status === 'تم الإنجاز' ? 'تم تعليم الطلب كمنجز' : 'أُعيد الطلب إلى تحت الإجراء');
+      }
+    } else if (act === 'delete') {
+      if (confirm(`حذف طلب «${row.name || 'بدون اسم'}»؟ لا يمكن التراجع.`)) {
+        manualRaw = manualRaw.filter((m) => m.id !== row.uid);
+        saveManual();
+        rebuild();
+        renderAll();
+        toast('تم حذف الطلب');
+      }
+    }
+  }
+});
+
+document.querySelectorAll('th[data-sort]').forEach((th) => {
+  th.addEventListener('click', () => {
+    const k = th.dataset.sort;
+    if (sortKey === k) sortDir = -sortDir; else { sortKey = k; sortDir = 1; }
+    updateSortIcons();
+    renderTable();
+  });
+});
+
+document.addEventListener('change', (e) => {
+  const sel = e.target.closest ? e.target.closest('[data-catsel]') : null;
+  if (!sel) return;
+  const row = allRows.find((r) => r.uid === sel.dataset.id);
+  if (!row) return;
+  if (row.manual) {
+    const rec = manualRaw.find((m) => m.id === row.uid);
+    if (rec) { rec.cat = sel.value; saveManual(); }
+  } else {
+    if (sel.value === row.catAuto) delete catOverrides[catKey(row)]; else catOverrides[catKey(row)] = sel.value;
+    saveOverrides();
+  }
+  rebuild();
+  renderAll();
+  toast('تم تحديث التصنيف');
+});
+
+$('moreBtn').addEventListener('click', () => {
+  visibleLimit += CONFIG.PAGE_SIZE;
+  renderTable();
+});
+
+$('exportBtn').addEventListener('click', exportCsv);
+$('refreshBtn').addEventListener('click', () => loadData(true));
+
+$('settingsBtn').addEventListener('click', (e) => {
+  e.stopPropagation();
+  $('settingsPanel').classList.toggle('hidden');
+});
+document.addEventListener('click', (e) => {
+  if (!e.target.closest('#settingsPanel') && !e.target.closest('#settingsBtn')) $('settingsPanel').classList.add('hidden');
+});
+document.querySelectorAll('input[name="waApp"]').forEach((r) => {
+  r.checked = r.value === waApp;
+  r.addEventListener('change', () => {
+    waApp = r.value;
+    STORE.set('ksamc-wa-app', waApp);
+    renderTable();
+    toast(waApp === 'business' ? 'تم اختيار واتساب بزنس' : 'تم اختيار واتساب العادي');
+  });
+});
+
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape' && !$('modal').classList.contains('hidden')) { closeModal(); return; }
+  const tag = (e.target.tagName || '').toLowerCase();
+  if (e.key === '/' && tag !== 'input' && tag !== 'textarea' && tag !== 'select') {
+    e.preventDefault();
+    $('searchInput').focus();
+  }
+});
+
+document.addEventListener('visibilitychange', () => { if (!document.hidden && $('modal').classList.contains('hidden')) loadData(); });
+window.addEventListener('online', () => loadData(true));
+
+/* =====================================================================
+   بدء التشغيل
+   ===================================================================== */
+applyTheme(document.documentElement.classList.contains('dark'));
+loadManual();
+loadOverrides();
+rebuild();
+updateFilterButtons();
+updateSortIcons();
+loadData();
+setInterval(() => { if (!document.hidden && $('modal').classList.contains('hidden')) loadData(); }, CONFIG.REFRESH_MS);
+</script>
+</body>
+</html>
