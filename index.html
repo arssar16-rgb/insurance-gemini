@@ -3,8 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>نظام متابعة التأمين الطبي | KSAMC</title>
+    <title>سجل متابعة طلبات التأمين الطبي | KSAMC</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script>
@@ -18,8 +19,7 @@
                             800: '#064E3B',
                             700: '#047857',
                             600: '#059669',
-                            50:  '#ECFDF5',
-                            gold: '#D97706'
+                            50:  '#ECFDF5'
                         }
                     }
                 }
@@ -28,205 +28,163 @@
     </script>
     <style>
         body { font-family: 'Tajawal', sans-serif; background-color: #EEF2F6; }
-        /* تخصيص شريط التمرير ليكون أنيقاً ومخفياً جزئياً */
         ::-webkit-scrollbar { width: 6px; height: 6px; }
         ::-webkit-scrollbar-track { background: #f1f5f9; }
         ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
-        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
-        .table-container { height: calc(100vh - 235px); }
-        @media (max-width: 1024px) { .table-container { height: auto; max-height: 600px; } }
+        .table-container { height: calc(100vh - 215px); }
+        @media (max-width: 1024px) { .table-container { height: auto; max-height: 70vh; } }
     </style>
 </head>
-<body class="h-screen flex overflow-hidden text-slate-800 select-none">
+<body class="lg:h-screen flex flex-col lg:flex-row overflow-x-hidden lg:overflow-hidden text-slate-800">
 
-    <!-- القائمة الجانبية الثابتة (Sidebar) -->
-    <aside class="w-64 bg-dga-900 text-white flex flex-col justify-between shrink-0 shadow-xl z-20 hidden lg:flex">
+    <!-- القائمة الجانبية (تظهر في الكمبيوتر) -->
+    <aside class="w-60 bg-dga-900 text-white flex-col justify-between shrink-0 shadow-xl z-20 hidden lg:flex">
         <div>
-            <!-- الشعار والهوية -->
             <div class="p-4 border-b border-white/10 flex items-center gap-3 bg-black/20">
-                <div class="w-10 h-10 rounded-lg bg-dga-600 flex items-center justify-center text-white font-bold text-xl shadow-inner border border-white/20">
-                    <i class="fa-solid fa-staff-snake"></i>
+                <div class="w-10 h-10 rounded-lg bg-dga-600 flex items-center justify-center text-white font-bold text-xl border border-white/20">
+                    <i class="fa-solid fa-hospital-user"></i>
                 </div>
                 <div>
-                    <h1 class="font-extrabold text-sm leading-tight text-white">مدينة الملك سلمان الطبية</h1>
+                    <h1 class="font-extrabold text-sm leading-tight">مدينة الملك سلمان الطبية</h1>
                     <p class="text-[11px] text-emerald-300 font-medium mt-0.5">مكتب ضابط اتصال التأمين</p>
                 </div>
             </div>
 
-            <!-- زر الإضافة السريع -->
-            <div class="p-3.5">
-                <button onclick="openRequestModal()" class="w-full bg-dga-600 hover:bg-emerald-500 text-white font-bold py-2.5 px-4 rounded-lg shadow-lg transition flex items-center justify-center gap-2 text-sm border border-emerald-400/30">
-                    <i class="fa-solid fa-plus"></i>
-                    <span>تسجيل معاملة جديدة</span>
-                </button>
-            </div>
-
-            <!-- قوائم الفلترة السريعة -->
-            <nav class="px-3 space-y-1 text-xs font-bold">
-                <p class="px-2 py-1.5 text-[10px] text-slate-400 uppercase tracking-wider">تصنيف المعاملات</p>
-                <button onclick="setFilter('all')" id="nav-all" class="w-full flex items-center justify-between px-3 py-2.5 rounded-lg bg-white/10 text-white transition">
-                    <span class="flex items-center gap-2.5"><i class="fa-solid fa-layer-group text-emerald-400 w-4"></i> جميع الطلبات</span>
+            <nav class="p-3 space-y-1.5 text-xs font-bold">
+                <p class="px-2 py-1 text-[10px] text-slate-400">تصنيف المعاملات</p>
+                <button onclick="setFilter('all')" id="nav-all" class="w-full flex items-center justify-between px-3 py-2.5 rounded-lg bg-white/15 text-white transition">
+                    <span class="flex items-center gap-2"><i class="fa-solid fa-layer-group text-emerald-400 w-4"></i> جميع الطلبات</span>
                     <span id="side-total" class="bg-black/30 px-2 py-0.5 rounded text-[11px]">0</span>
                 </button>
                 <button onclick="setFilter('تحت الإجراء')" id="nav-pending" class="w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-slate-300 hover:bg-white/5 transition">
-                    <span class="flex items-center gap-2.5"><i class="fa-solid fa-clock text-amber-400 w-4"></i> تحت الإجراء</span>
+                    <span class="flex items-center gap-2"><i class="fa-solid fa-hourglass-half text-amber-400 w-4"></i> تحت الإجراء</span>
                     <span id="side-pending" class="bg-amber-500/20 text-amber-300 px-2 py-0.5 rounded text-[11px]">0</span>
                 </button>
-                <button onclick="setFilter('منجز')" id="nav-completed" class="w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-slate-300 hover:bg-white/5 transition">
-                    <span class="flex items-center gap-2.5"><i class="fa-solid fa-circle-check text-emerald-400 w-4"></i> مكتمل / منجز</span>
+                <button onclick="setFilter('تم الإنجاز')" id="nav-completed" class="w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-slate-300 hover:bg-white/5 transition">
+                    <span class="flex items-center gap-2"><i class="fa-solid fa-circle-check text-emerald-400 w-4"></i> تم الإنجاز</span>
                     <span id="side-completed" class="bg-emerald-500/20 text-emerald-300 px-2 py-0.5 rounded text-[11px]">0</span>
                 </button>
-                <button onclick="setFilter('مرفوض')" id="nav-rejected" class="w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-slate-300 hover:bg-white/5 transition">
-                    <span class="flex items-center gap-2.5"><i class="fa-solid fa-circle-xmark text-rose-400 w-4"></i> مرفوض / معلق</span>
-                    <span id="side-rejected" class="bg-rose-500/20 text-rose-300 px-2 py-0.5 rounded text-[11px]">0</span>
+                <button onclick="setFilter('لم يتم تنفيذ المهمة')" id="nav-unexecuted" class="w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-slate-300 hover:bg-white/5 transition">
+                    <span class="flex items-center gap-2"><i class="fa-solid fa-circle-xmark text-rose-400 w-4"></i> لم يتم التنفيذ</span>
+                    <span id="side-unexecuted" class="bg-rose-500/20 text-rose-300 px-2 py-0.5 rounded text-[11px]">0</span>
                 </button>
             </nav>
-
-            <!-- فلتر شركات التأمين -->
-            <div class="px-3 mt-4">
-                <p class="px-2 py-1.5 text-[10px] text-slate-400 uppercase tracking-wider font-bold">فرز حسب شركة التأمين</p>
-                <select id="companyFilter" onchange="renderData()" class="w-full bg-black/25 border border-white/15 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-emerald-400">
-                    <option value="all" class="text-slate-800">جميع الشركات</option>
-                    <option value="بوبا العربية" class="text-slate-800">بوبا العربية</option>
-                    <option value="التعاونية" class="text-slate-800">التعاونية</option>
-                    <option value="ميدغلف" class="text-slate-800">ميدغلف</option>
-                    <option value="تكافل الراجحي" class="text-slate-800">تكافل الراجحي</option>
-                    <option value="ملاذ" class="text-slate-800">ملاذ</option>
-                    <option value="الجزيرة تكافل" class="text-slate-800">الجزيرة تكافل</option>
-                    <option value="ولاء" class="text-slate-800">ولاء</option>
-                </select>
-            </div>
         </div>
 
-        <!-- أدوات النظام السفلية -->
-        <div class="p-3 border-t border-white/10 bg-black/20 space-y-1.5 text-xs">
-            <button onclick="exportCSV()" class="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-slate-300 hover:bg-white/10 transition">
-                <i class="fa-solid fa-file-excel text-emerald-400"></i>
-                <span>تصدير السجل (Excel CSV)</span>
-            </button>
-            <button onclick="openSettingsModal()" class="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-slate-300 hover:bg-white/10 transition">
-                <i class="fa-solid fa-gear text-amber-400"></i>
-                <span>إعدادات الربط مع الشيت</span>
-            </button>
+        <div class="p-3 border-t border-white/10 bg-black/20 text-[11px] text-emerald-200/80 text-center">
+            مربوط مباشرة مع Google Sheets
         </div>
     </aside>
 
-    <!-- منطقة العمل الرئيسية (Main Area) -->
-    <div class="flex-1 flex flex-col h-screen overflow-hidden">
+    <!-- المحتوى الرئيسي -->
+    <div class="flex-1 flex flex-col lg:h-screen overflow-hidden">
         
-        <!-- الشريط العلوي المدمج (Top Bar) -->
-        <header class="bg-white border-b border-slate-200 px-4 py-2.5 flex items-center justify-between gap-4 shrink-0 shadow-sm z-10">
-            <div class="flex items-center gap-3">
-                <button onclick="openRequestModal()" class="lg:hidden bg-dga-700 text-white px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1">
-                    <i class="fa-solid fa-plus"></i> جديد
-                </button>
+        <!-- الشريط العلوي -->
+        <header class="bg-white border-b border-slate-200 px-4 py-3 flex flex-wrap items-center justify-between gap-3 shrink-0 shadow-xs">
+            <div class="flex items-center gap-2">
+                <div class="lg:hidden w-8 h-8 rounded-lg bg-dga-800 text-white flex items-center justify-center text-sm">
+                    <i class="fa-solid fa-hospital-user"></i>
+                </div>
                 <div>
-                    <h2 class="text-sm font-extrabold text-slate-800 flex items-center gap-2">
-                        <span>سجل متابعة طلبات التأمين الطبي</span>
-                        <span id="syncBadge" class="px-2 py-0.5 text-[10px] rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 font-bold flex items-center gap-1">
-                            <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span> جاهز
+                    <h2 class="text-xs sm:text-sm font-extrabold text-slate-800 flex items-center gap-2">
+                        <span>سجل متابعة طلبات التأمين الطبي (KSAMC)</span>
+                        <span class="px-2 py-0.5 text-[10px] rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 font-bold flex items-center gap-1">
+                            <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span> مباشر
                         </span>
                     </h2>
                 </div>
             </div>
 
-            <!-- شريط البحث المركزي السريع -->
-            <div class="flex-1 max-w-md relative">
+            <!-- البحث الفوري -->
+            <div class="flex-1 max-w-md relative w-full sm:w-auto order-3 sm:order-2">
                 <i class="fa-solid fa-magnifying-glass absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
-                <input type="text" id="searchInput" oninput="renderData()" placeholder="بحث فوري بالاسم، رقم الهوية، رقم الطلب، أو الجوال..." 
+                <input type="text" id="searchInput" oninput="renderData()" placeholder="ابحث بالاسم، الهوية، رقم الملف، أو الجوال..." 
                     class="w-full bg-slate-100 focus:bg-white border border-slate-200 focus:border-dga-600 rounded-lg py-1.5 pr-8 pl-3 text-xs focus:outline-none transition">
             </div>
 
-            <!-- أزرار التحكم السريعة -->
-            <div class="flex items-center gap-2">
-                <button onclick="syncWithGoogleSheet()" title="مزامنة وتحديث من الشيت" class="bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 transition border border-slate-200">
-                    <i id="syncIcon" class="fa-solid fa-arrows-rotate text-dga-700"></i>
-                    <span class="hidden sm:inline">مزامنة</span>
-                </button>
-                <button onclick="openSettingsModal()" class="lg:hidden bg-slate-100 p-2 rounded-lg text-slate-600 text-xs">
-                    <i class="fa-solid fa-gear"></i>
-                </button>
-            </div>
+            <!-- زر التحديث المباشر -->
+            <button onclick="loadSheetData()" class="order-2 sm:order-3 bg-dga-50 hover:bg-emerald-100 text-dga-800 px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 transition border border-emerald-200">
+                <i id="syncIcon" class="fa-solid fa-arrows-rotate text-dga-700"></i>
+                <span>تحديث</span>
+            </button>
         </header>
 
-        <!-- شريط المؤشرات الإحصائية المدمج (KPI Ribbon) -->
-        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 px-4 pt-3 shrink-0">
-            <div onclick="setFilter('all')" class="bg-white p-3 rounded-xl border border-slate-200/80 shadow-sm flex items-center justify-between cursor-pointer hover:border-dga-600 transition">
+        <!-- بطاقات الإحصائيات (تعمل كفلاتر بالضغط عليها في الجوال والكمبيوتر) -->
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5 px-4 pt-3 shrink-0">
+            <div onclick="setFilter('all')" class="bg-white p-3 rounded-xl border border-slate-200 shadow-2xs flex items-center justify-between cursor-pointer hover:border-dga-600 transition">
                 <div>
-                    <p class="text-[11px] font-bold text-slate-500">إجمالي المعاملات</p>
+                    <p class="text-[11px] font-bold text-slate-500">إجمالي الطلبات</p>
                     <p id="stat-total" class="text-xl font-extrabold text-slate-800 mt-0.5">0</p>
                 </div>
-                <div class="w-9 h-9 rounded-lg bg-slate-100 text-slate-700 flex items-center justify-center text-sm">
-                    <i class="fa-solid fa-folder-open"></i>
+                <div class="w-8 h-8 rounded-lg bg-slate-100 text-slate-700 flex items-center justify-center text-xs">
+                    <i class="fa-solid fa-clipboard-list"></i>
                 </div>
             </div>
 
-            <div onclick="setFilter('تحت الإجراء')" class="bg-white p-3 rounded-xl border border-amber-200/80 shadow-sm flex items-center justify-between cursor-pointer hover:border-amber-500 transition">
+            <div onclick="setFilter('تحت الإجراء')" class="bg-white p-3 rounded-xl border border-amber-200 shadow-2xs flex items-center justify-between cursor-pointer hover:border-amber-500 transition">
                 <div>
-                    <p class="text-[11px] font-bold text-amber-700">تحت الإجراء (معلق)</p>
+                    <p class="text-[11px] font-bold text-amber-700">تحت الإجراء</p>
                     <p id="stat-pending" class="text-xl font-extrabold text-amber-600 mt-0.5">0</p>
                 </div>
-                <div class="w-9 h-9 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center text-sm border border-amber-200">
+                <div class="w-8 h-8 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center text-xs border border-amber-200">
                     <i class="fa-solid fa-hourglass-half"></i>
                 </div>
             </div>
 
-            <div onclick="setFilter('منجز')" class="bg-white p-3 rounded-xl border border-emerald-200/80 shadow-sm flex items-center justify-between cursor-pointer hover:border-emerald-600 transition">
+            <div onclick="setFilter('تم الإنجاز')" class="bg-white p-3 rounded-xl border border-emerald-200 shadow-2xs flex items-center justify-between cursor-pointer hover:border-emerald-600 transition">
                 <div>
-                    <p class="text-[11px] font-bold text-emerald-700">تم الإنجاز والموافقة</p>
+                    <p class="text-[11px] font-bold text-emerald-700">تم الإنجاز</p>
                     <p id="stat-completed" class="text-xl font-extrabold text-emerald-600 mt-0.5">0</p>
                 </div>
-                <div class="w-9 h-9 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center text-sm border border-emerald-200">
+                <div class="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center text-xs border border-emerald-200">
                     <i class="fa-solid fa-check-double"></i>
                 </div>
             </div>
 
-            <div class="bg-gradient-to-l from-dga-800 to-dga-700 p-3 rounded-xl shadow-sm flex items-center justify-between text-white">
+            <div onclick="setFilter('لم يتم تنفيذ المهمة')" class="bg-white p-3 rounded-xl border border-rose-200 shadow-2xs flex items-center justify-between cursor-pointer hover:border-rose-500 transition">
                 <div>
-                    <p class="text-[11px] font-medium text-emerald-100">نسبة الإنجاز العام</p>
-                    <p id="stat-rate" class="text-xl font-extrabold mt-0.5">0%</p>
+                    <p class="text-[11px] font-bold text-rose-700">لم يتم التنفيذ</p>
+                    <p id="stat-unexecuted" class="text-xl font-extrabold text-rose-600 mt-0.5">0</p>
                 </div>
-                <div class="w-9 h-9 rounded-lg bg-white/10 text-emerald-300 flex items-center justify-center text-sm">
-                    <i class="fa-solid fa-chart-pie"></i>
+                <div class="w-8 h-8 rounded-lg bg-rose-50 text-rose-600 flex items-center justify-center text-xs border border-rose-200">
+                    <i class="fa-solid fa-triangle-exclamation"></i>
                 </div>
             </div>
         </div>
 
-        <!-- حاوية الجدول الثابتة (Data Grid) -->
+        <!-- منطقة الجدول -->
         <div class="p-4 flex-1 overflow-hidden flex flex-col">
-            <div class="bg-white rounded-xl border border-slate-200 shadow-sm flex-1 flex flex-col overflow-hidden">
+            <div class="bg-white rounded-xl border border-slate-200 shadow-2xs flex-1 flex flex-col overflow-hidden">
                 
-                <!-- شريط أدوات الجدول السريع -->
-                <div class="px-4 py-2 bg-slate-50 border-b border-slate-200 flex flex-wrap items-center justify-between gap-2 text-xs">
-                    <div class="flex items-center gap-1.5">
-                        <span class="font-bold text-slate-600 ml-2">الفلتر النشط:</span>
+                <!-- أزرار الفلترة السريعة -->
+                <div class="px-3 py-2 bg-slate-50 border-b border-slate-200 flex flex-wrap items-center justify-between gap-2 text-xs">
+                    <div class="flex items-center gap-1 overflow-x-auto">
                         <button onclick="setFilter('all')" id="tab-all" class="px-2.5 py-1 rounded-md font-bold bg-dga-800 text-white transition">الكل</button>
                         <button onclick="setFilter('تحت الإجراء')" id="tab-pending" class="px-2.5 py-1 rounded-md font-bold text-slate-600 hover:bg-slate-200 transition">تحت الإجراء</button>
-                        <button onclick="setFilter('منجز')" id="tab-completed" class="px-2.5 py-1 rounded-md font-bold text-slate-600 hover:bg-slate-200 transition">منجز</button>
-                        <button onclick="setFilter('مرفوض')" id="tab-rejected" class="px-2.5 py-1 rounded-md font-bold text-slate-600 hover:bg-slate-200 transition">مرفوض</button>
+                        <button onclick="setFilter('تم الإنجاز')" id="tab-completed" class="px-2.5 py-1 rounded-md font-bold text-slate-600 hover:bg-slate-200 transition">تم الإنجاز</button>
+                        <button onclick="setFilter('لم يتم تنفيذ المهمة')" id="tab-unexecuted" class="px-2.5 py-1 rounded-md font-bold text-slate-600 hover:bg-slate-200 transition">لم يتم التنفيذ</button>
                     </div>
-                    <div class="text-[11px] text-slate-500 font-medium" id="showingCount">
-                        يعرض 0 معاملة
-                    </div>
+                    <span id="showingCount" class="text-[11px] font-bold text-slate-500">جاري التحميل...</span>
                 </div>
 
-                <!-- الجدول الفعلي القابل للتمرير -->
-                <div class="table-container overflow-y-auto flex-1">
-                    <table class="w-full text-right border-collapse">
-                        <thead class="bg-slate-100/95 text-slate-700 text-[11px] font-extrabold uppercase sticky top-0 z-10 border-b border-slate-200 shadow-sm backdrop-blur-sm">
+                <!-- الجدول -->
+                <div class="table-container overflow-y-auto overflow-x-auto flex-1">
+                    <table class="w-full text-right border-collapse min-w-[950px]">
+                        <thead class="bg-slate-100 text-slate-700 text-[11px] font-extrabold sticky top-0 z-10 border-b border-slate-200">
                             <tr>
-                                <th class="py-2.5 px-3 w-10 text-center">#</th>
+                                <th class="py-2.5 px-2.5 w-10 text-center">م</th>
+                                <th class="py-2.5 px-2.5 w-24">التاريخ</th>
                                 <th class="py-2.5 px-3">اسم المريض</th>
-                                <th class="py-2.5 px-3">الهوية / الملف</th>
-                                <th class="py-2.5 px-3">شركة التأمين</th>
-                                <th class="py-2.5 px-3">القسم / الإجراء المطلوب</th>
-                                <th class="py-2.5 px-3 text-center">تاريخ الطلب</th>
-                                <th class="py-2.5 px-3 text-center">الحالة</th>
-                                <th class="py-2.5 px-3 text-center w-44">إجراءات سريعة</th>
+                                <th class="py-2.5 px-2.5">الهوية / الملف</th>
+                                <th class="py-2.5 px-2.5">الجوال</th>
+                                <th class="py-2.5 px-2.5">الجهة / القسم</th>
+                                <th class="py-2.5 px-3">الخدمة والمستندات المطلوبة</th>
+                                <th class="py-2.5 px-2.5">الملاحظات</th>
+                                <th class="py-2.5 px-2.5 text-center">الحالة</th>
+                                <th class="py-2.5 px-2.5 text-center">تواصل</th>
                             </tr>
                         </thead>
                         <tbody id="tableBody" class="divide-y divide-slate-200/70 text-xs">
-                            <!-- يتم تعبئة الصفوف تلقائياً -->
                         </tbody>
                     </table>
                 </div>
@@ -235,238 +193,180 @@
         </div>
     </div>
 
-    <!-- نافذة إضافة / تعديل معاملة (Modal) -->
-    <div id="requestModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 hidden items-center justify-center p-4">
-        <div class="bg-white rounded-xl max-w-xl w-full shadow-2xl border border-slate-200 overflow-hidden">
-            <div class="bg-dga-800 px-5 py-3.5 text-white flex justify-between items-center">
-                <h3 id="modalTitle" class="font-bold text-sm flex items-center gap-2">
-                    <i class="fa-solid fa-file-medical text-emerald-300"></i>
-                    <span>تسجيل طلب تأمين جديد</span>
-                </h3>
-                <button onclick="closeRequestModal()" class="text-white/70 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
-            </div>
-            
-            <form id="requestForm" onsubmit="saveRequest(event)" class="p-5 space-y-3.5 text-xs">
-                <input type="hidden" id="editId">
-                
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <div>
-                        <label class="block font-bold text-slate-700 mb-1">اسم المريض الرباعي *</label>
-                        <input type="text" id="f_name" required class="w-full border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:border-dga-600" placeholder="الاسم كما في الهوية">
-                    </div>
-                    <div>
-                        <label class="block font-bold text-slate-700 mb-1">رقم الهوية / الإقامة أو الملف *</label>
-                        <input type="text" id="f_nid" required class="w-full border border-slate-300 rounded-lg px-3 py-2 font-mono focus:outline-none focus:border-dga-600" placeholder="10xxxxxxxx">
-                    </div>
-                </div>
-
-                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                    <div>
-                        <label class="block font-bold text-slate-700 mb-1">شركة التأمين *</label>
-                        <select id="f_company" required class="w-full border border-slate-300 rounded-lg px-3 py-2 bg-white focus:outline-none focus:border-dga-600">
-                            <option value="بوبا العربية">بوبا العربية</option>
-                            <option value="التعاونية">التعاونية</option>
-                            <option value="ميدغلف">ميدغلف</option>
-                            <option value="تكافل الراجحي">تكافل الراجحي</option>
-                            <option value="ملاذ">ملاذ</option>
-                            <option value="الجزيرة تكافل">الجزيرة تكافل</option>
-                            <option value="ولاء">ولاء</option>
-                            <option value="أخرى">أخرى</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label class="block font-bold text-slate-700 mb-1">رقم الجوال (لواتساب) *</label>
-                        <input type="tel" id="f_phone" required class="w-full border border-slate-300 rounded-lg px-3 py-2 font-mono text-left focus:outline-none focus:border-dga-600" placeholder="05xxxxxxxx">
-                    </div>
-                    <div>
-                        <label class="block font-bold text-slate-700 mb-1">حالة الطلب</label>
-                        <select id="f_status" class="w-full border border-slate-300 rounded-lg px-3 py-2 bg-white font-bold focus:outline-none focus:border-dga-600">
-                            <option value="تحت الإجراء">تحت الإجراء</option>
-                            <option value="منجز">منجز</option>
-                            <option value="مرفوض">مرفوض</option>
-                        </select>
-                    </div>
-                </div>
-
-                <div>
-                    <label class="block font-bold text-slate-700 mb-1">القسم / الإجراء الطبي أو الملاحظات *</label>
-                    <input type="text" id="f_service" required class="w-full border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:border-dga-600" placeholder="مثال: موافقة عملية منظار / تنويم / أشعة رنين مغناطيسي...">
-                </div>
-
-                <div class="pt-3 border-t border-slate-200 flex justify-end gap-2">
-                    <button type="button" onclick="closeRequestModal()" class="px-4 py-2 rounded-lg font-bold text-slate-600 hover:bg-slate-100">إلغاء</button>
-                    <button type="submit" class="bg-dga-700 hover:bg-dga-800 text-white px-6 py-2 rounded-lg font-bold shadow transition">حفظ المعاملة</button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <!-- نافذة إعدادات الربط (Settings Modal) -->
-    <div id="settingsModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 hidden items-center justify-center p-4">
-        <div class="bg-white rounded-xl max-w-md w-full shadow-2xl border border-slate-200 overflow-hidden text-xs">
-            <div class="bg-slate-800 px-5 py-3.5 text-white flex justify-between items-center">
-                <h3 class="font-bold text-sm flex items-center gap-2">
-                    <i class="fa-solid fa-link text-amber-400"></i>
-                    <span>إعدادات الربط مع Google Sheets</span>
-                </h3>
-                <button onclick="closeSettingsModal()" class="text-white/70 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
-            </div>
-            <div class="p-5 space-y-4">
-                <div>
-                    <label class="block font-bold text-slate-700 mb-1">رابط تطبيق الويب (Google Apps Script URL)</label>
-                    <input type="url" id="scriptUrlInput" class="w-full border border-slate-300 rounded-lg px-3 py-2 font-mono text-[11px] text-left focus:outline-none focus:border-dga-600" placeholder="https://script.google.com/macros/s/.../exec">
-                    <p class="text-[11px] text-slate-500 mt-1">يُحفظ الرابط في متصفحك مباشرة لإرسال واستقبال التحديثات من ملف (سجل متابعة طلبات التأمين).</p>
-                </div>
-                <div class="pt-3 border-t flex justify-between items-center">
-                    <button onclick="resetDemoData()" class="text-rose-600 hover:underline font-bold">استعادة البيانات التجريبية</button>
-                    <div class="flex gap-2">
-                        <button onclick="closeSettingsModal()" class="px-4 py-2 rounded-lg font-bold text-slate-600 hover:bg-slate-100">إغلاق</button>
-                        <button onclick="saveSettings()" class="bg-dga-700 text-white px-5 py-2 rounded-lg font-bold">حفظ الرابط</button>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
     <script>
-        // مفاتيح التخزين المحلي
-        const STORAGE_KEY = 'ksamc_insurance_records_v2';
-        const SCRIPT_URL_KEY = 'ksamc_script_url';
+        // رابط القراءة المباشر من الشيت عبر PapaParse بدون أي إعدادات
+        const SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/135L6yG_lk5HPj77mZbUqv3-oZNWWd4T5N6yR6hX3Wk0/gviz/tq?tqx=out:csv&sheet=" + encodeURIComponent("سجل طلبات التأمين");
 
-        let currentFilter = 'all';
         let records = [];
+        let currentFilter = 'all';
 
-        // بيانات افتراضية أولية منظمة في حال فتح الصفحة لأول مرة
-        const initialDemoData = [
-            { id: 101, name: "فهد بن عبد الله الحربي", nid: "1045892310", company: "بوبا العربية", phone: "0501234567", service: "موافقة أشعة رنين مغناطيسي (MRI)", date: "2026-11-05", status: "تحت الإجراء" },
-            { id: 102, name: "مريم بنت سالم الجهني", nid: "1087412365", company: "التعاونية", phone: "0559876543", service: "تغطية تنويم بقسم الباطنية", date: "2026-11-05", status: "تحت الإجراء" },
-            { id: 103, name: "عبدالرحمن بن صالح العمري", nid: "1023984512", company: "تكافل الراجحي", phone: "0543219876", service: "عملية منظار جراحي", date: "2026-11-04", status: "منجز" },
-            { id: 104, name: "نورة بنت خالد العوفي", nid: "1096325874", company: "ميدغلف", phone: "0567891234", service: "صرف أدوية تخصصية عالية التكلفة", date: "2026-11-04", status: "منجز" },
-            { id: 105, name: "سلطان بن محمد الصاعدي", nid: "1014785236", company: "ملاذ", phone: "0531597532", service: "إعادة رفع مطالبة مرفوضة (كود طبي)", date: "2026-11-03", status: "مرفوض" }
-        ];
-
-        // تشغيل النظام عند فتح الصفحة
+        // تحميل البيانات مباشرة عند فتح الصفحة (وتحديثها تلقائياً كل 30 ثانية)
         window.onload = () => {
-            const saved = localStorage.getItem(STORAGE_KEY);
-            if (saved) {
-                records = JSON.parse(saved);
-            } else {
-                records = [...initialDemoData];
-                saveToLocal();
-            }
-            document.getElementById('scriptUrlInput').value = localStorage.getItem(SCRIPT_URL_KEY) || '';
-            renderData();
-            syncWithGoogleSheet(true); // محاولة جلب هادئة إذا كان الرابط موجوداً
+            loadSheetData();
+            setInterval(loadSheetData, 30000);
         };
 
-        function saveToLocal() {
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(records));
+        function loadSheetData() {
+            const icon = document.getElementById('syncIcon');
+            icon.classList.add('animate-spin');
+
+            Papa.parse(SHEET_CSV_URL + "&_=" + Date.now(), {
+                download: true,
+                skipEmptyLines: true,
+                complete: function(results) {
+                    icon.classList.remove('animate-spin');
+                    const rows = results.data;
+                    const parsed = [];
+
+                    rows.forEach(r => {
+                        const seq = (r[0] || '').trim();
+                        const name = (r[2] || '').trim();
+                        // تخطي صفوف العناوين والإحصائيات العلوية في الشيت
+                        if (!name || name === 'اسم المريض' || isNaN(Number(seq)) || Number(seq) <= 0) return;
+
+                        let st = (r[11] || '').trim();
+                        if (st.includes('إنجاز') || st.includes('انجاز') || st.includes('منجز')) st = 'تم الإنجاز';
+                        else if (st.includes('لم يتم')) st = 'لم يتم تنفيذ المهمة';
+                        else st = 'تحت الإجراء';
+
+                        parsed.push({
+                            seq: Number(seq),
+                            receivedDate: (r[1] || '').trim(),
+                            name: name,
+                            nid: (r[3] || '').trim(),
+                            mrn: (r[4] || '').trim(),
+                            phone: (r[5] || '').replace(/^'/, '').trim(),
+                            company: (r[6] || '').trim(),
+                            requestType: (r[7] || '').trim(),
+                            service: (r[8] || '').trim(),
+                            department: (r[9] || '').trim(),
+                            docs: (r[10] || '').trim(),
+                            status: st,
+                            nonExecReason: (r[12] || '').trim(),
+                            followUpDate: (r[13] || '').trim(),
+                            notes: (r[14] || '').trim()
+                        });
+                    });
+
+                    records = parsed;
+                    renderData();
+                },
+                error: function() {
+                    icon.classList.remove('animate-spin');
+                }
+            });
         }
 
-        // تحديث الجدول والإحصائيات
         function renderData() {
             const search = document.getElementById('searchInput').value.trim().toLowerCase();
-            const company = document.getElementById('companyFilter').value;
 
-            // حساب الإحصائيات الكلية
             const total = records.length;
             const pending = records.filter(r => r.status === 'تحت الإجراء').length;
-            const completed = records.filter(r => r.status === 'منجز').length;
-            const rejected = records.filter(r => r.status === 'مرفوض').length;
-            const rate = total > 0 ? Math.round((completed / total) * 100) : 0;
+            const completed = records.filter(r => r.status === 'تم الإنجاز').length;
+            const unexecuted = records.filter(r => r.status === 'لم يتم تنفيذ المهمة').length;
 
             document.getElementById('stat-total').innerText = total;
             document.getElementById('stat-pending').innerText = pending;
             document.getElementById('stat-completed').innerText = completed;
-            document.getElementById('stat-rate').innerText = rate + '%';
+            document.getElementById('stat-unexecuted').innerText = unexecuted;
 
             document.getElementById('side-total').innerText = total;
             document.getElementById('side-pending').innerText = pending;
             document.getElementById('side-completed').innerText = completed;
-            document.getElementById('side-rejected').innerText = rejected;
+            document.getElementById('side-unexecuted').innerText = unexecuted;
 
-            // فلترة السجلات للعرض
             const filtered = records.filter(r => {
                 const matchStatus = currentFilter === 'all' || r.status === currentFilter;
-                const matchCompany = company === 'all' || r.company === company;
                 const matchSearch = !search || 
-                    r.name.toLowerCase().includes(search) || 
-                    r.nid.includes(search) || 
-                    r.phone.includes(search) || 
+                    r.name.toLowerCase().includes(search) ||
+                    r.nid.toLowerCase().includes(search) ||
+                    r.mrn.toLowerCase().includes(search) ||
+                    r.phone.includes(search) ||
                     r.service.toLowerCase().includes(search) ||
-                    r.company.toLowerCase().includes(search);
-                return matchStatus && matchCompany && matchSearch;
+                    r.docs.toLowerCase().includes(search);
+                return matchStatus && matchSearch;
             });
 
-            document.getElementById('showingCount').innerText = `يعرض ${filtered.length} من أصل ${total} معاملة`;
+            document.getElementById('showingCount').innerText = `يعرض ${filtered.length} من ${total} معاملة`;
 
             const tbody = document.getElementById('tableBody');
             if (filtered.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="8" class="py-12 text-center text-slate-400 font-bold">لا توجد معاملات مطابقة للبحث أو الفلتر المحدد</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="10" class="py-12 text-center text-slate-400 font-bold">لا توجد معاملات مطابقة</td></tr>`;
                 return;
             }
 
-            tbody.innerHTML = filtered.map((item, idx) => {
+            tbody.innerHTML = filtered.map(item => {
                 let badgeClass = 'bg-amber-50 text-amber-700 border-amber-300';
                 let dotClass = 'bg-amber-500';
-                if (item.status === 'منجز') {
+                if (item.status === 'تم الإنجاز') {
                     badgeClass = 'bg-emerald-50 text-emerald-700 border-emerald-300';
                     dotClass = 'bg-emerald-500';
-                } else if (item.status === 'مرفوض') {
+                } else if (item.status === 'لم يتم تنفيذ المهمة') {
                     badgeClass = 'bg-rose-50 text-rose-700 border-rose-300';
                     dotClass = 'bg-rose-500';
                 }
 
-                // تجهيز رابط الواتساب الرسمي المعتمد
-                const cleanPhone = item.phone.replace(/^0/, '966').replace(/[^0-9]/g, '');
-                const waText = encodeURIComponent(
-                    `السلام عليكم ورحمة الله وبركاته،\nعزيزي المستفيد: *${item.name}*\nبخصوص طلب التأمين الطبي رقم الهوية (${item.nid}) لدى شركة *${item.company}* بشأن (${item.service}) بمدينة الملك سلمان الطبية (KSAMC)، نفيدكم بأن حالة طلبكم حالياً: *${item.status}*.\nمع تمنياتنا لكم بدوام الصحة والعافية.`
+                const rawPhone = (item.phone || '').replace(/[^0-9]/g, '');
+                const cleanPhone = rawPhone.startsWith('0') ? '966' + rawPhone.slice(1) : (rawPhone.startsWith('966') ? rawPhone : '966' + rawPhone);
+                const waMessage = encodeURIComponent(
+                    `السلام عليكم ورحمة الله وبركاته،\n` +
+                    `عزيزي المستفيد / *${item.name}*\n` +
+                    `معكم مكتب ضابط اتصال التأمين الطبي بمدينة الملك سلمان الطبية (KSAMC) بالمدينة المنورة.\n\n` +
+                    `بخصوص ملفكم الطبي رقم (${item.mrn || 'غير محدد'})، نأمل منكم التكرم بتزويدنا بالمستندات التالية لاستكمال إجراءات التأمين الطبي:\n` +
+                    `📌 *${item.docs || item.service}*\n\n` +
+                    `شاكرين تعاونكم، ومتمنين لكم دوام الصحة والعافية.`
                 );
-                const waLink = `https://wa.me/${cleanPhone}?text=${waText}`;
+                const waUrl = rawPhone ? `https://wa.me/${cleanPhone}?text=${waMessage}` : '#';
 
                 return `
-                <tr class="hover:bg-slate-50 transition group">
-                    <td class="py-2.5 px-3 text-center font-mono text-slate-400 text-[11px]">${idx + 1}</td>
-                    <td class="py-2.5 px-3 font-bold text-slate-800">${item.name}</td>
-                    <td class="py-2.5 px-3 font-mono text-slate-600 text-[11px]">${item.nid}</td>
+                <tr class="hover:bg-slate-50 transition align-top">
+                    <td class="py-2.5 px-2.5 text-center font-mono font-bold text-slate-500 text-[11px]">${item.seq}</td>
+                    <td class="py-2.5 px-2.5 font-mono text-slate-600 text-[11px] whitespace-nowrap">${item.receivedDate || '-'}</td>
                     <td class="py-2.5 px-3">
-                        <span class="bg-slate-100 text-slate-700 px-2 py-0.5 rounded font-bold text-[11px] border border-slate-200">${item.company}</span>
+                        <div class="font-extrabold text-slate-800 text-xs">${item.name}</div>
+                        <div class="text-[10px] text-dga-700 font-bold mt-0.5">${item.requestType || ''}</div>
                     </td>
-                    <td class="py-2.5 px-3 text-slate-600 font-medium">${item.service}</td>
-                    <td class="py-2.5 px-3 text-center font-mono text-slate-500 text-[11px]">${item.date}</td>
-                    <td class="py-2.5 px-3 text-center">
-                        <button onclick="cycleStatus(${item.id})" title="اضغط لتغيير الحالة سريعاً" class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold border ${badgeClass} hover:opacity-80 transition cursor-pointer">
+                    <td class="py-2.5 px-2.5 font-mono text-[11px]">
+                        <div class="text-slate-700 font-bold">${item.nid || '-'}</div>
+                        <div class="text-slate-500 text-[10px]">ملف: ${item.mrn || '-'}</div>
+                    </td>
+                    <td class="py-2.5 px-2.5 font-mono text-slate-700 text-[11px] whitespace-nowrap" dir="ltr">${item.phone || '-'}</td>
+                    <td class="py-2.5 px-2.5 text-[11px]">
+                        <div class="font-bold text-slate-700">${item.company || '-'}</div>
+                        <div class="text-[10px] text-slate-500">${item.department || ''}</div>
+                    </td>
+                    <td class="py-2.5 px-3 text-[11px]">
+                        <div class="font-bold text-slate-800">${item.service || '-'}</div>
+                        <div class="text-amber-800 bg-amber-50 border border-amber-200/60 rounded px-1.5 py-0.5 mt-1 text-[10px]">
+                            <span class="font-bold">المطلوب:</span> ${item.docs || '-'}
+                        </div>
+                    </td>
+                    <td class="py-2.5 px-2.5 text-[11px] text-slate-600">
+                        <div>${item.notes || '-'}</div>
+                        ${item.followUpDate ? `<div class="text-[10px] font-mono text-slate-400 mt-0.5">متابعة: ${item.followUpDate}</div>` : ''}
+                    </td>
+                    <td class="py-2.5 px-2.5 text-center whitespace-nowrap">
+                        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold border ${badgeClass}">
                             <span class="w-1.5 h-1.5 rounded-full ${dotClass}"></span>
                             <span>${item.status}</span>
-                        </button>
+                        </span>
                     </td>
-                    <td class="py-2.5 px-3 text-center">
-                        <div class="flex items-center justify-center gap-1">
-                            <a href="${waLink}" target="_blank" title="إرسال رسالة واتساب للمريض" class="bg-emerald-600 hover:bg-emerald-700 text-white px-2.5 py-1 rounded-md text-[11px] font-bold flex items-center gap-1 shadow-xs transition">
-                                <i class="fa-brands fa-whatsapp"></i> واتساب
-                            </a>
-                            <button onclick="quickComplete(${item.id})" title="اعتماد كـ تم الإنجاز" class="p-1.5 rounded-md border border-slate-200 hover:bg-emerald-50 hover:text-emerald-700 hover:border-emerald-300 text-slate-500 transition">
-                                <i class="fa-solid fa-check"></i>
-                            </button>
-                            <button onclick="editRecord(${item.id})" title="تعديل البيان" class="p-1.5 rounded-md border border-slate-200 hover:bg-blue-50 hover:text-blue-600 text-slate-500 transition">
-                                <i class="fa-solid fa-pen"></i>
-                            </button>
-                            <button onclick="deleteRecord(${item.id})" title="حذف" class="p-1.5 rounded-md border border-slate-200 hover:bg-rose-50 hover:text-rose-600 text-slate-400 transition">
-                                <i class="fa-solid fa-trash"></i>
-                            </button>
-                        </div>
+                    <td class="py-2.5 px-2.5 text-center whitespace-nowrap">
+                        ${rawPhone ? `
+                        <a href="${waUrl}" target="_blank" class="bg-emerald-600 hover:bg-emerald-700 text-white px-2.5 py-1 rounded-md text-[11px] font-bold inline-flex items-center gap-1 shadow-2xs transition">
+                            <i class="fa-brands fa-whatsapp"></i> واتساب
+                        </a>` : `<span class="text-slate-400 text-[10px]">لا يوجد</span>`}
                     </td>
                 </tr>`;
             }).join('');
         }
 
-        // تبديل الفلتر النشط
         function setFilter(status) {
             currentFilter = status;
-            const map = { 'all': 'all', 'تحت الإجراء': 'pending', 'منجز': 'completed', 'مرفوض': 'rejected' };
+            const map = { 'all': 'all', 'تحت الإجراء': 'pending', 'تم الإنجاز': 'completed', 'لم يتم تنفيذ المهمة': 'unexecuted' };
             const activeKey = map[status];
 
-            ['all', 'pending', 'completed', 'rejected'].forEach(key => {
+            ['all', 'pending', 'completed', 'unexecuted'].forEach(key => {
                 const tab = document.getElementById(`tab-${key}`);
                 const nav = document.getElementById(`nav-${key}`);
                 if (tab) {
@@ -481,175 +381,6 @@
                 }
             });
             renderData();
-        }
-
-        // تغيير الحالة السريع بالضغط على الكبسولة
-        function cycleStatus(id) {
-            const item = records.find(r => r.id === id);
-            if (!item) return;
-            const order = ['تحت الإجراء', 'منجز', 'مرفوض'];
-            item.status = order[(order.indexOf(item.status) + 1) % order.length];
-            saveToLocal();
-            renderData();
-            pushUpdateToSheet('update', item);
-        }
-
-        // زر صح السريع للإنجاز
-        function quickComplete(id) {
-            const item = records.find(r => r.id === id);
-            if (!item) return;
-            item.status = 'منجز';
-            saveToLocal();
-            renderData();
-            pushUpdateToSheet('update', item);
-        }
-
-        // إضافة أو تعديل طلب
-        function openRequestModal() {
-            document.getElementById('requestForm').reset();
-            document.getElementById('editId').value = '';
-            document.getElementById('modalTitle').innerHTML = `<i class="fa-solid fa-file-medical text-emerald-300"></i><span>تسجيل طلب تأمين جديد</span>`;
-            document.getElementById('requestModal').classList.remove('hidden');
-            document.getElementById('requestModal').classList.add('flex');
-        }
-
-        function closeRequestModal() {
-            document.getElementById('requestModal').classList.add('hidden');
-            document.getElementById('requestModal').classList.remove('flex');
-        }
-
-        function editRecord(id) {
-            const item = records.find(r => r.id === id);
-            if (!item) return;
-            document.getElementById('editId').value = item.id;
-            document.getElementById('f_name').value = item.name;
-            document.getElementById('f_nid').value = item.nid;
-            document.getElementById('f_company').value = item.company;
-            document.getElementById('f_phone').value = item.phone;
-            document.getElementById('f_status').value = item.status;
-            document.getElementById('f_service').value = item.service;
-            document.getElementById('modalTitle').innerHTML = `<i class="fa-solid fa-pen-to-square text-amber-300"></i><span>تعديل بيانات المعاملة</span>`;
-            document.getElementById('requestModal').classList.remove('hidden');
-            document.getElementById('requestModal').classList.add('flex');
-        }
-
-        function saveRequest(e) {
-            e.preventDefault();
-            const editId = document.getElementById('editId').value;
-            const payload = {
-                id: editId ? Number(editId) : Date.now(),
-                name: document.getElementById('f_name').value.trim(),
-                nid: document.getElementById('f_nid').value.trim(),
-                company: document.getElementById('f_company').value,
-                phone: document.getElementById('f_phone').value.trim(),
-                status: document.getElementById('f_status').value,
-                service: document.getElementById('f_service').value.trim(),
-                date: new Date().toISOString().split('T')[0]
-            };
-
-            if (editId) {
-                const idx = records.findIndex(r => r.id === Number(editId));
-                if (idx > -1) {
-                    payload.date = records[idx].date; // احتفظ بالتاريخ الأصلي
-                    records[idx] = payload;
-                }
-                pushUpdateToSheet('update', payload);
-            } else {
-                records.unshift(payload);
-                pushUpdateToSheet('create', payload);
-            }
-
-            saveToLocal();
-            renderData();
-            closeRequestModal();
-        }
-
-        function deleteRecord(id) {
-            if (!confirm('هل أنت متأكد من حذف هذه المعاملة من السجل؟')) return;
-            records = records.filter(r => r.id !== id);
-            saveToLocal();
-            renderData();
-            pushUpdateToSheet('delete', { id });
-        }
-
-        // إدارة إعدادات الشيت والمزامنة
-        function openSettingsModal() {
-            document.getElementById('settingsModal').classList.remove('hidden');
-            document.getElementById('settingsModal').classList.add('flex');
-        }
-
-        function closeSettingsModal() {
-            document.getElementById('settingsModal').classList.add('hidden');
-            document.getElementById('settingsModal').classList.remove('flex');
-        }
-
-        function saveSettings() {
-            const url = document.getElementById('scriptUrlInput').value.trim();
-            localStorage.setItem(SCRIPT_URL_KEY, url);
-            closeSettingsModal();
-            syncWithGoogleSheet();
-        }
-
-        function resetDemoData() {
-            if (!confirm('سيتم استعادة البيانات التجريبية، هل أنت متأكد؟')) return;
-            records = [...initialDemoData];
-            saveToLocal();
-            renderData();
-            closeSettingsModal();
-        }
-
-        async function syncWithGoogleSheet(silent = false) {
-            const url = localStorage.getItem(SCRIPT_URL_KEY);
-            if (!url) {
-                if (!silent) openSettingsModal();
-                return;
-            }
-
-            const icon = document.getElementById('syncIcon');
-            icon.classList.add('animate-spin');
-
-            try {
-                const res = await fetch(`${url}?action=read`);
-                const data = await res.json();
-                if (Array.isArray(data) && data.length > 0) {
-                    records = data;
-                    saveToLocal();
-                    renderData();
-                }
-            } catch (err) {
-                console.warn('يعمل النظام حالياً بالبيانات المحفوظة محلياً.');
-            } finally {
-                setTimeout(() => icon.classList.remove('animate-spin'), 500);
-            }
-        }
-
-        async function pushUpdateToSheet(action, item) {
-            const url = localStorage.getItem(SCRIPT_URL_KEY);
-            if (!url) return;
-            try {
-                await fetch(url, {
-                    method: 'POST',
-                    mode: 'no-cors',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ action, ...item })
-                });
-            } catch (e) {
-                console.error(e);
-            }
-        }
-
-        // تصدير السجل إلى ملف إكسل (CSV يدعم العربية)
-        function exportCSV() {
-            const headers = ['اسم المريض', 'رقم الهوية', 'شركة التأمين', 'رقم الجوال', 'الإجراء الطبي', 'التاريخ', 'الحالة'];
-            const rows = records.map(r => [
-                `"${r.name}"`, `"${r.nid}"`, `"${r.company}"`, `"${r.phone}"`, `"${r.service}"`, `"${r.date}"`, `"${r.status}"`
-            ]);
-            const csvContent = '\uFEFF' + [headers.join(','), ...rows.map(e => e.join(','))].join('\n');
-            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-            const link = document.createElement('a');
-            link.href = URL.createObjectURL(blob);
-            link.download = `سجل_متابعة_طلبات_التأمين_KSAMC_${new Date().toISOString().slice(0,10)}.csv`;
-            link.click();
         }
     </script>
 </body>
