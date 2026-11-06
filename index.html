@@ -148,7 +148,7 @@
       gap: 10px;
     }
 
-    .theme-btn {
+    .theme-btn, .sync-btn {
       background: rgba(255, 255, 255, 0.15);
       color: white;
       border: 1px solid rgba(255, 255, 255, 0.25);
@@ -160,7 +160,7 @@
       align-items: center;
       gap: 6px;
     }
-    .theme-btn:hover { background: rgba(255, 255, 255, 0.25); }
+    .theme-btn:hover, .sync-btn:hover { background: rgba(255, 255, 255, 0.25); }
 
     .content {
       padding: 20px;
@@ -442,35 +442,15 @@ const todayStr = () => {
   return d.getFullYear() + "/" + String(d.getMonth() + 1).padStart(2, "0") + "/" + String(d.getDate()).padStart(2, "0");
 };
 
-const STORE_KEY = "KSAMC_INSURANCE_V4";
+const STORE_KEY = "KSAMC_INSURANCE_V5";
 const THEME_KEY = "KSAMC_THEME_DARK";
 
-// ضع رابط Google Apps Script Web App هنا لاحقاً ليتزامن تلقائياً مع الشيت
-const DEFAULT_SCRIPT_URL = "";
-
-const INITIAL_CASES = [
-  { id: "c14", seq: 14, receivedDate: "2026/11/05", name: "RAWAN HULAYYIL QUWAYFAN ALSUHAYMI", nationalId: "1100772043", mrn: "1159793", phone: "0564134610", company: "تجمع المدينة المنورة الصحي - الموافقات المركزية", type: "طلب مستندات", service: "إرفاق الأشعة التشخيصية للتصوير حول الشرخ", department: "مدينة الملك سلمان الطبية (KSAMC)", document: "الأشعة التشخيصية للتصوير حول الشرخ", status: "تحت الإجراء", reason: "", lastFollowUp: "2026/11/05", notes: "" },
-  { id: "c13", seq: 13, receivedDate: "2026/10/31", name: "MURADI AHMED KUWAYBIR SALEM", nationalId: "1084746351", mrn: "1566750", phone: "0591033702", company: "تجمع المدينة المنورة الصحي - إدارة الموافقات المركزية", type: "استفسار / أمراض سابقة", service: "الإفادة بتاريخ أول تشخيص للورم الليفي بالرحم", department: "مدينة الملك سلمان الطبية (KSAMC)", document: "إفادة بتاريخ أول تشخيص للورم الليفي بالرحم", status: "تحت الإجراء", reason: "", lastFollowUp: "2026/11/05", notes: "للتجربة فقط: نسخة مستقلة من صورة الإيميل" },
-  { id: "c12", seq: 12, receivedDate: "2026/11/04", name: "SANA ABDULLAH AHMED BIN MAHFUTH", nationalId: "1040657130", mrn: "489207", phone: "0551709210", company: "تجمع المدينة المنورة الصحي - الموافقات الطبية (CBO)", type: "طلب مستندات", service: "مطالبة تأمينية", department: "مدينة الملك سلمان الطبية العام (KSAMC - General) / د. خالد المطيري", document: "تأكيد إشعاعي للتشخيص (Radiological confirmation of the diagnosis)", status: "تحت الإجراء", reason: "", lastFollowUp: "2026/11/04", notes: "" },
-  { id: "c11", seq: 11, receivedDate: "2026/11/04", name: "TFLAH MOHAMMED Mustajab", nationalId: "P0044604", mrn: "1670714", phone: "0557472805", company: "تجمع المدينة المنورة الصحي - الموافقات الطبية (CBO)", type: "طلب مستندات", service: "فتح ملف لأم الطفلة لرفع الحالة على التأمين", department: "مستشفى الولادة والأطفال - مدينة الملك سلمان الطبية (KSAMC)", document: "مستندات هوية الأم لفتح الملف", status: "تم الإنجاز", reason: "", lastFollowUp: "2026/11/04", notes: "" },
-  { id: "c10", seq: 10, receivedDate: "2026/11/02", name: "SULTAN GHASSAN MOHAMMED Alkotani", nationalId: "1147293995", mrn: "1616020", phone: "", company: "تجمع المدينة المنورة الصحي - إدارة تنمية الإيرادات (CBO)", type: "طلب مستندات", service: "تقرير كتلة الجسم (BMI inbody report)", department: "الإدارة الطبية - مدينة الملك سلمان الطبية", document: "تقرير كتلة الجسم (BMI inbody report)", status: "تم الإنجاز", reason: "", lastFollowUp: "2026/11/05", notes: "تم إرفاق تقرير كتلة الجسم، وتتحول للإدارة الطبية" },
-  { id: "c9", seq: 9, receivedDate: "2026/11/02", name: "Alia Khatoon Fiaz Khan", nationalId: "BU4178914", mrn: "1670143", phone: "0559192825", company: "تجمع المدينة المنورة الصحي - إدارة تنمية الإيرادات (CBO)", type: "طلب مستندات", service: "إرفاق صورة التحويل من مستشفى المواساة", department: "مدينة الملك سلمان الطبية (KSAMC)", document: "صورة التحويل من مستشفى المواساة", status: "تم الإنجاز", reason: "", lastFollowUp: "2026/11/02", notes: "" },
-  { id: "c8", seq: 8, receivedDate: "2026/11/01", name: "BOY SAMIA MORSHEED RAJEH", nationalId: "12879270", mrn: "12879270", phone: "0561699676", company: "تجمع المدينة المنورة الصحي - إدارة تنمية الإيرادات (CBO)", type: "طلب مستندات", service: "مستندات ولادة وحمل وتحويل وجواز وختم دخول للمولود", department: "مستشفى الولادة والأطفال - مدينة الملك سلمان الطبية (KSAMC)", document: "تقرير سونار الحمل، تاريخ الحمل، تقرير الولادة، تقرير التحويل، صورة الجواز، ختم الدخول", status: "تم الإنجاز", reason: "", lastFollowUp: "2026/11/04", notes: "لم ترسل كامل المستندات، ولم يتم الرد على جوال المريض" },
-  { id: "c7", seq: 7, receivedDate: "2026/10/30", name: "NAEMA ELTAGI AID AHMED", nationalId: "P12345347", mrn: "1669663", phone: "0546054339", company: "تجمع المدينة المنورة الصحي - إدارة تنمية الإيرادات (CBO)", type: "طلب مستندات", service: "صورة التأشيرة (الفيزا) وبرنت من أبشر", department: "مدينة الملك سلمان الطبية (KSAMC)", document: "صورة التأشيرة (الفيزا) + برنت من أبشر", status: "تم الإنجاز", reason: "", lastFollowUp: "2026/11/01", notes: "تم استلام التأشيرة وبرنت أبشر وإنهاء الطلب بنجاح" },
-  { id: "c6", seq: 6, receivedDate: "2026/10/31", name: "GIRL FATEMAH FAKHAR EL DEIN KAN", nationalId: "2153604638", mrn: "1669754", phone: "0536682383", company: "تجمع المدينة المنورة الصحي - إدارة تنمية الإيرادات (CBO)", type: "طلب مستندات", service: "فتح ملف مستعجل وإرفاق خطاب التحويل من المستشفى الخاص", department: "مدينة الملك سلمان الطبية (KSAMC)", document: "خطاب التحويل من المستشفى الخاص", status: "تم الإنجاز", reason: "", lastFollowUp: "2026/11/01", notes: "تم إرفاق خطاب التحويل وفتح الملف وإنهاء الطلب بنجاح" },
-  { id: "c5", seq: 5, receivedDate: "2026/10/31", name: "ROANZA ASAAD SRBYNY ISMAIL", nationalId: "A28012535", mrn: "1669684", phone: "0543746672", company: "تجمع المدينة المنورة الصحي - إدارة تنمية الإيرادات (CBO)", type: "طلب مستندات", service: "إرفاق ختم الدخول للطفلة", department: "مدينة الملك سلمان الطبية (KSAMC)", document: "صورة ختم الدخول من الجواز أو برنت الدخول", status: "تم الإنجاز", reason: "", lastFollowUp: "2026/11/01", notes: "تم إرفاق ختم الدخول وإنهاء الطلب بنجاح" },
-  { id: "c4", seq: 4, receivedDate: "2026/10/31", name: "MURADI AHMED KUWAYBIR SALEM", nationalId: "1084746351", mrn: "1566750", phone: "0591033702", company: "تجمع المدينة المنورة الصحي - إدارة تنمية الإيرادات (CBO)", type: "استفسار / أمراض سابقة", service: "إفادة بأول مرة شُخصت بورم ليفي بالرحم", department: "مدينة الملك سلمان الطبية (KSAMC)", document: "تقرير طبي يوضح تاريخ أول تشخيص للورم الليفي بالرحم", status: "تم الإنجاز", reason: "", lastFollowUp: "2026/11/01", notes: "تم الإفادة بأن التشخيص كان قبل شهرين تقريباً وتم إنهاء الطلب" },
-  { id: "c3", seq: 3, receivedDate: "2026/10/31", name: "JAWAHER OMER ABD ALRAHMAN Bakes", nationalId: "09489238", mrn: "1669942", phone: "0576763340", company: "تجمع المدينة المنورة الصحي - إدارة تنمية الإيرادات (CBO)", type: "طلب مستندات", service: "صورة من تأشيرة الزيارة مع أبشر وتاريخ وختم الدخول", department: "مدينة الملك سلمان الطبية (KSAMC)", document: "صورة تأشيرة الزيارة + برنت أبشر موضحاً به تاريخ وختم الدخول", status: "تم الإنجاز", reason: "", lastFollowUp: "2026/11/01", notes: "تم استلام المستندات وإنهاء الطلب بنجاح" },
-  { id: "c2", seq: 2, receivedDate: "2026/10/22", name: "ABDULLH ABDULGANI I ALSHAREF", nationalId: "1086730601", mrn: "1666508", phone: "0566476067", company: "تجمع المدينة المنورة الصحي - الموافقات الطبية (CBO)", type: "استفسار / إصابات", service: "تفاصيل الإصابة للمريض المنوم وهل هي إصابة عمل", department: "التنويم - مدينة الملك سلمان الطبية (KSAMC)", document: "تقرير تفاصيل الإصابة وإفادة إصابة العمل", status: "تم الإنجاز", reason: "", lastFollowUp: "2026/10/31", notes: "تم الانتهاء من الطلب وإغلاقه" },
-  { id: "c1", seq: 1, receivedDate: "2026/10/22", name: "SAFIYA MAMA SEDEK KOF", nationalId: "KP0282609", mrn: "1666685", phone: "0570273395", company: "تجمع المدينة المنورة الصحي - إدارة تنمية الإيرادات (CBO)", type: "طلب مستندات", service: "توفير صورة جواز السفر وبرنت أبشر ببيانات الدخول", department: "مدينة الملك سلمان الطبية (KSAMC)", document: "صورة جواز السفر + برنت أبشر ببيانات الدخول", status: "تم الإنجاز", reason: "", lastFollowUp: "2026/10/31", notes: "تم الانتهاء من الطلب وإغلاقه" }
-];
+// رابط Google Apps Script الخاص بك المربوط بالشيت مباشرة
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzFELNfr-XmJsq1E1xjl2rLSFbdtkY4Dm6qy4bPRXbzk6LlUbWovbEUOj4ShnjLvefN/exec";
 
 let state = {
-  cases: structuredClone(INITIAL_CASES),
-  settings: {
-    lateDays: 2,
-    scriptUrl: DEFAULT_SCRIPT_URL
-  }
+  cases: [],
+  settings: { lateDays: 2 }
 };
 
 let page = "home";
@@ -478,6 +458,7 @@ let search = "";
 let typeFilter = "";
 let statusFilter = "";
 let isDark = false;
+let isSyncing = false;
 
 function initTheme() {
   isDark = localStorage.getItem(THEME_KEY) === "1";
@@ -491,34 +472,71 @@ window.toggleTheme = function() {
   render();
 };
 
-function load() {
+async function fetchFromSheet() {
+  if (!SCRIPT_URL) return;
+  isSyncing = true;
+  updateSyncButton();
+  try {
+    const res = await fetch(SCRIPT_URL);
+    const data = await res.json();
+    if (data.ok && Array.isArray(data.cases) && data.cases.length > 0) {
+      state.cases = data.cases;
+      localStorage.setItem(STORE_KEY, JSON.stringify(state));
+    }
+  } catch (err) {
+    console.error("Sync error:", err);
+  }
+  isSyncing = false;
+  updateSyncButton();
+  render();
+}
+
+async function syncToSheet() {
+  if (!SCRIPT_URL) return;
+  isSyncing = true;
+  updateSyncButton();
+  try {
+    await fetch(SCRIPT_URL, {
+      method: "POST",
+      body: JSON.stringify({ cases: state.cases })
+    });
+  } catch (err) {
+    console.error("Post error:", err);
+  }
+  isSyncing = false;
+  updateSyncButton();
+}
+
+function updateSyncButton() {
+  const btn = $("#syncBtn");
+  if (btn) {
+    btn.innerHTML = isSyncing ? "⏳ جاري المزامنة..." : "🔄 مزامنة الشيت";
+  }
+}
+
+function loadLocal() {
   try {
     const raw = localStorage.getItem(STORE_KEY);
     if (raw) {
       const parsed = JSON.parse(raw);
-      if (Array.isArray(parsed.cases) && parsed.cases.length) {
-        state = parsed;
-      }
+      if (Array.isArray(parsed.cases)) state = parsed;
     }
   } catch (e) {
     console.error(e);
   }
 }
 
-function save() {
-  try {
-    localStorage.setItem(STORE_KEY, JSON.stringify(state));
-  } catch (e) {
-    alert("تعذر حفظ البيانات محلياً");
-  }
+function saveAndSync() {
+  localStorage.setItem(STORE_KEY, JSON.stringify(state));
+  syncToSheet();
+  render();
 }
 
 function daysSince(dateStr) {
   if (!dateStr) return 0;
   const normalized = String(dateStr).replace(/\//g, "-");
   const d = new Date(normalized);
-  if (isNaN(d.getTime())) return 0;
-  return (Date.now() - d.getTime()) / 86400000;
+  return isNaN(d.getTime()) ? 0 : (Date.now() - d.getTime()) / 86400000;
 }
 
 function isLate(c) {
@@ -586,8 +604,7 @@ window.whatsapp = function(id) {
     alert("لا يوجد رقم جوال مسجل لهذه المعاملة.");
     return;
   }
-  const url = `https://wa.me/${intl}?text=${encodeURIComponent(buildWhatsAppMessage(c))}`;
-  window.open(url, "_blank");
+  window.open(`https://wa.me/${intl}?text=${encodeURIComponent(buildWhatsAppMessage(c))}`, "_blank");
 };
 
 window.navigate = function(p) {
@@ -612,6 +629,10 @@ function caseActions(c) {
   </div>`;
 }
 
+window.triggerSync = function() {
+  fetchFromSheet().then(() => alert("تمت المزامنة مع الشيت بنجاح ✓"));
+};
+
 function render() {
   const s = stats();
   $("#root").innerHTML = `
@@ -633,8 +654,9 @@ function render() {
           <p>مدينة الملك سلمان الطبية | KSAMC — ضابط الاتصال التأميني</p>
         </div>
         <div class="header-actions">
+          <button id="syncBtn" class="sync-btn" onclick="triggerSync()">🔄 مزامنة الشيت</button>
           <button class="theme-btn" onclick="toggleTheme()">
-            ${isDark ? "☀️ الوضع النهاري" : "🌙 الوضع الليلي"}
+            ${isDark ? "☀️ النهاري" : "🌙 الليلي"}
           </button>
         </div>
       </header>
@@ -862,7 +884,7 @@ window.caseForm = function(id = null) {
       company: $("#f_company").value.trim(),
       department: $("#f_dept").value.trim(),
       document: $("#f_document").value.trim(),
-       service: $("#f_document").value.trim(),
+      service: $("#f_document").value.trim(),
       status: $("#f_status").value,
       lastFollowUp: $("#f_follow").value.trim(),
       notes: $("#f_notes").value.trim()
@@ -873,9 +895,8 @@ window.caseForm = function(id = null) {
     } else {
       state.cases.unshift(item);
     }
-    save();
+    saveAndSync();
     closeModal();
-    render();
   };
 };
 
@@ -913,8 +934,7 @@ window.completeCase = function(id) {
   if (!c) return;
   c.status = "تم الإنجاز";
   c.lastFollowUp = todayStr();
-  save();
-  render();
+  saveAndSync();
 };
 
 window.reopenCase = function(id) {
@@ -922,16 +942,14 @@ window.reopenCase = function(id) {
   if (!c) return;
   c.status = "تحت الإجراء";
   c.lastFollowUp = todayStr();
-  save();
-  render();
+  saveAndSync();
 };
 
 window.deleteCase = function(id) {
   if (!confirm("هل أنت متأكد من حذف هذه المعاملة؟")) return;
   state.cases = state.cases.filter(x => x.id !== id);
-  save();
+  saveAndSync();
   closeModal();
-  render();
 };
 
 function renderReports() {
@@ -954,26 +972,14 @@ function renderReports() {
 function renderSettings() {
   $("#pageContent").innerHTML = `
   <section class="panel">
-    <h2>الإعدادات والنسخ الاحتياطي</h2>
-    <div class="formgrid">
-      <div class="field full">
-        <label>رابط Google Apps Script (اختياري للمزامنة المباشرة مع شيت التأمين)</label>
-        <input id="s_url" dir="ltr" placeholder="https://script.google.com/macros/s/.../exec" value="${escapeHTML(state.settings.scriptUrl || "")}">
-      </div>
-    </div>
+    <h2>إعدادات الربط السحابي مع Google Sheets</h2>
+    <p class="muted">النظام متصل حالياً بملف Google Sheets السحابي وتتم المزامنة أوتوماتيكياً.</p>
     <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:16px">
-      <button class="btn" onclick="saveSettings()">حفظ الإعدادات</button>
+      <button class="btn" onclick="triggerSync()">🔄 جلب البيانات المحدثة من الشيت</button>
       <button class="btn secondary" onclick="exportJSON()">⬇ تصدير نسخة احتياطية (JSON)</button>
-      <button class="btn secondary" onclick="resetDefaults()">↺ استعادة بيانات الشيت الـ 14</button>
     </div>
   </section>`;
 }
-
-window.saveSettings = function() {
-  state.settings.scriptUrl = $("#s_url").value.trim();
-  save();
-  alert("تم حفظ الإعدادات بنجاح ✓");
-};
 
 window.exportJSON = function() {
   const blob = new Blob([JSON.stringify(state, null, 2)], { type: "application/json" });
@@ -983,16 +989,9 @@ window.exportJSON = function() {
   a.click();
 };
 
-window.resetDefaults = function() {
-  if (!confirm("استعادة المعاملات الـ 14 الأساسية من السجل؟")) return;
-  state.cases = structuredClone(INITIAL_CASES);
-  save();
-  render();
-};
-
 initTheme();
-load();
-render();
+loadLocal();
+fetchFromSheet();
 </script>
 </body>
 </html>
