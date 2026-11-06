@@ -1,387 +1,1731 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>سجل متابعة طلبات التأمين الطبي | KSAMC</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    fontFamily: { sans: ['Tajawal', 'sans-serif'] },
-                    colors: {
-                        dga: {
-                            900: '#042f24',
-                            800: '#064E3B',
-                            700: '#047857',
-                            600: '#059669',
-                            50:  '#ECFDF5'
-                        }
-                    }
-                }
-            }
-        }
-    </script>
-    <style>
-        body { font-family: 'Tajawal', sans-serif; background-color: #EEF2F6; }
-        ::-webkit-scrollbar { width: 6px; height: 6px; }
-        ::-webkit-scrollbar-track { background: #f1f5f9; }
-        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
-        .table-container { height: calc(100vh - 215px); }
-        @media (max-width: 1024px) { .table-container { height: auto; max-height: 70vh; } }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>KSAMC | نظام متابعة التأمين الطبي - مدينة الملك سلمان الطبية</title>
+  <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --green: #00635e;
+      --green-light: #00827b;
+      --dark: #003d42;
+      --bg: #eef3f8;
+      --card: #ffffff;
+      --text: #172b3d;
+      --muted: #64788b;
+      --line: #dce5ee;
+      --blue: #2563eb;
+      --orange: #d97706;
+      --purple: #7c3aed;
+      --emerald: #059669;
+      --red: #dc2626;
+      --radius: 16px;
+      --shadow: 0 4px 20px rgba(0, 40, 50, 0.06);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Tajawal', Tahoma, Arial, sans-serif;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    .app {
+      display: grid;
+      grid-template-columns: 240px 1fr;
+      min-height: 100vh;
+    }
+
+    /* القائمة الجانبية المطابقة لنظام KSAMC */
+    .sidebar {
+      background: linear-gradient(180deg, #00645f 0%, #003b40 100%);
+      color: #fff;
+      padding: 18px 14px;
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      box-shadow: -4px 0 24px rgba(0, 0, 0, 0.12);
+      z-index: 100;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px;
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      border-radius: 14px;
+      margin-bottom: 18px;
+    }
+
+    .logo {
+      width: 44px;
+      height: 44px;
+      border-radius: 12px;
+      background: rgba(255, 255, 255, 0.16);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 23px;
+      flex-shrink: 0;
+    }
+
+    .brand h2 {
+      font-size: 18px;
+      font-weight: 900;
+      color: #fff;
+      letter-spacing: 0.5px;
+    }
+
+    .brand p {
+      font-size: 11px;
+      color: #c2e5e3;
+      line-height: 1.4;
+      margin-top: 2px;
+    }
+
+    .nav {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .nav button {
+      width: 100%;
+      border: 0;
+      background: transparent;
+      color: #d7eceb;
+      padding: 11px 13px;
+      border-radius: 12px;
+      text-align: right;
+      font-size: 13.5px;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      transition: all 0.2s ease;
+    }
+
+    .nav button:hover {
+      background: rgba(255, 255, 255, 0.12);
+      color: #fff;
+    }
+
+    .nav button.active {
+      background: rgba(255, 255, 255, 0.2);
+      color: #fff;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    }
+
+    .nav button.add-btn-side {
+      background: linear-gradient(135deg, #10b981, #059669);
+      color: #fff;
+      margin: 4px 0;
+      box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+    }
+
+    .sidebar-footer {
+      padding: 12px;
+      background: rgba(0, 0, 0, 0.22);
+      border-radius: 12px;
+      font-size: 11.5px;
+      color: #bde2df;
+      text-align: center;
+      line-height: 1.6;
+    }
+
+    /* المحتوى الرئيسي */
+    .main {
+      padding: 20px 24px 95px;
+      max-width: 1480px;
+      width: 100%;
+      margin: 0 auto;
+    }
+
+    .header {
+      background: var(--card);
+      padding: 18px 22px;
+      border-radius: var(--radius);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-bottom: 18px;
+      border: 1px solid var(--line);
+      box-shadow: var(--shadow);
+    }
+
+    .header h1 {
+      font-size: 20px;
+      font-weight: 900;
+      color: var(--dark);
+    }
+
+    .sub {
+      color: var(--muted);
+      font-size: 12.5px;
+      margin-top: 4px;
+    }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    /* مؤشر المزامنة التلقائية الفورية */
+    .live-sync-pill {
+      padding: 7px 14px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 800;
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      background: #ecfdf5;
+      color: #047857;
+      border: 1px solid #a7f3d0;
+    }
+
+    .live-sync-pill.syncing {
+      background: #eff6ff;
+      color: #1d4ed8;
+      border-color: #bfdbfe;
+    }
+
+    .pulse-dot {
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      background: #10b981;
+      box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+      animation: pulseGreen 2s infinite;
+    }
+
+    @keyframes pulseGreen {
+      0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.6); }
+      70% { box-shadow: 0 0 0 7px rgba(16, 185, 129, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+    }
+
+    /* الأزرار */
+    .btn {
+      border: 0;
+      padding: 10px 14px;
+      border-radius: 12px;
+      cursor: pointer;
+      font-weight: 700;
+      font-size: 13px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      transition: all 0.18s ease;
+      text-decoration: none;
+    }
+
+    .btn:active { transform: scale(0.97); }
+    .btn-primary { background: var(--green); color: #fff; }
+    .btn-primary:hover { background: var(--dark); }
+    .btn-light { background: #e9f0f6; color: var(--text); }
+    .btn-light:hover { background: #dbe5ee; }
+    .btn-green { background: #dcfce7; color: #166534; }
+    .btn-green:hover { background: #16a34a; color: #fff; }
+    .btn-orange { background: #fef3c7; color: #92400e; }
+    .btn-orange:hover { background: #d97706; color: #fff; }
+    .btn-red { background: #fee2e2; color: #991b1b; }
+    .btn-red:hover { background: #dc2626; color: #fff; }
+
+    /* البطاقات الإحصائية (KPIs) */
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+      gap: 14px;
+      margin-bottom: 18px;
+    }
+
+    .stat {
+      background: var(--card);
+      padding: 18px;
+      border-radius: var(--radius);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border: 1px solid var(--line);
+      box-shadow: var(--shadow);
+      cursor: pointer;
+      transition: transform 0.2s ease;
+    }
+
+    .stat:hover { transform: translateY(-2px); }
+    .stat p { color: var(--muted); font-size: 13px; font-weight: 700; margin-bottom: 6px; }
+    .stat h3 { font-size: 28px; font-weight: 900; }
+
+    .icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      font-weight: bold;
+    }
+
+    .blue { border-right: 5px solid var(--blue); }
+    .blue .icon { background: #dbeafe; color: var(--blue); }
+    .orange { border-right: 5px solid var(--orange); }
+    .orange .icon { background: #fef3c7; color: var(--orange); }
+    .purple { border-right: 5px solid var(--purple); }
+    .purple .icon { background: #ede9fe; color: var(--purple); }
+    .green { border-right: 5px solid var(--emerald); }
+    .green .icon { background: #d1fae5; color: var(--emerald); }
+
+    /* الحاويات */
+    .card {
+      background: var(--card);
+      padding: 18px 20px;
+      border-radius: var(--radius);
+      border: 1px solid var(--line);
+      margin-bottom: 18px;
+      box-shadow: var(--shadow);
+    }
+
+    .card-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-bottom: 14px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .filters {
+      display: grid;
+      grid-template-columns: 2fr 1fr 1fr 1fr auto;
+      gap: 10px;
+    }
+
+    input, select, textarea {
+      width: 100%;
+      padding: 11px 12px;
+      border-radius: 12px;
+      border: 1px solid #cdd8e3;
+      font-size: 13.5px;
+      background: #fbfdff;
+      color: var(--text);
+    }
+
+    input:focus, select:focus, textarea:focus {
+      outline: none;
+      border-color: var(--green);
+      background: #fff;
+      box-shadow: 0 0 0 3px rgba(0, 99, 94, 0.12);
+    }
+
+    /* الجدول */
+    .table-wrap { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; }
+    th, td {
+      padding: 12px 10px;
+      border-bottom: 1px solid #e9eff5;
+      text-align: right;
+      font-size: 13px;
+      vertical-align: middle;
+    }
+    th {
+      background: #f5f9fc;
+      color: #4f6478;
+      font-weight: 800;
+      white-space: nowrap;
+    }
+    tbody tr:hover { background: #f8fbff; }
+
+    /* الشارات */
+    .badge {
+      padding: 5px 10px;
+      border-radius: 999px;
+      font-size: 11.5px;
+      font-weight: 800;
+      display: inline-block;
+      white-space: nowrap;
+    }
+
+    .b-progress { background: #ede9fe; color: #6d28d9; }
+    .b-late { background: #fef3c7; color: #b45309; }
+    .b-done { background: #d1fae5; color: #047857; }
+    .b-fail { background: #fee2e2; color: #b91c1c; }
+
+    .p-high { background: #fee2e2; color: #b91c1c; }
+    .p-mid { background: #fef3c7; color: #b45309; }
+    .p-low { background: #e2e8f0; color: #334155; }
+
+    .actions {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    .actions button, .actions a {
+      border: 0;
+      padding: 6px 10px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 11.5px;
+      font-weight: 700;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    /* بطاقات الجوال */
+    .cards { display: none; }
+    .case-card {
+      background: #fff;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 15px;
+      margin-bottom: 12px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
+    }
+    .case-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+    .case-name { font-weight: 800; font-size: 15px; color: var(--dark); }
+    .case-meta {
+      font-size: 12.5px;
+      color: var(--muted);
+      line-height: 1.8;
+      background: #f8fafc;
+      padding: 10px 12px;
+      border-radius: 10px;
+      margin-bottom: 10px;
+    }
+
+    /* النوافذ المنبثقة */
+    .modal {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 25, 35, 0.55);
+      backdrop-filter: blur(2px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 14px;
+      z-index: 2000;
+    }
+
+    .modal-box {
+      background: #fff;
+      width: 100%;
+      max-width: 740px;
+      border-radius: 18px;
+      padding: 22px;
+      max-height: 92vh;
+      overflow-y: auto;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.25);
+    }
+
+    .modal-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+    .full { grid-column: 1 / -1; }
+
+    label {
+      display: block;
+      font-size: 12.5px;
+      color: var(--muted);
+      margin-bottom: 5px;
+      font-weight: 700;
+    }
+
+    .doc-chips {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      margin-top: 6px;
+    }
+    .doc-chip {
+      background: #f1f5f9;
+      border: 1px solid #cbd5e1;
+      color: #334155;
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-size: 11.5px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    .doc-chip:hover {
+      background: #e6f4f3;
+      border-color: var(--green);
+      color: var(--green);
+    }
+
+    .timeline {
+      border-right: 3px solid var(--green);
+      padding-right: 12px;
+      margin-top: 10px;
+    }
+    .t-item {
+      background: #f8fbff;
+      padding: 10px 12px;
+      border-radius: 10px;
+      margin-bottom: 8px;
+      border: 1px solid #e5eef7;
+    }
+
+    .toast-msg {
+      position: fixed;
+      bottom: 24px;
+      left: 24px;
+      background: var(--dark);
+      color: #fff;
+      padding: 12px 18px;
+      border-radius: 12px;
+      font-size: 13px;
+      font-weight: 700;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.25);
+      z-index: 3000;
+      display: none;
+      align-items: center;
+      gap: 8px;
+    }
+
+    /* شريط الجوال السفلي */
+    .mobilebar {
+      display: none;
+      position: fixed;
+      bottom: 0;
+      right: 0;
+      left: 0;
+      background: #fff;
+      border-top: 1px solid var(--line);
+      padding: 8px;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 6px;
+      z-index: 999;
+    }
+
+    .mobilebar button {
+      border: 0;
+      background: #f5f9fc;
+      padding: 9px 4px;
+      border-radius: 10px;
+      font-size: 11.5px;
+      font-weight: 700;
+      color: var(--text);
+      cursor: pointer;
+    }
+
+    .mobilebar button.active {
+      background: #e6f4f3;
+      color: var(--green);
+    }
+
+    .fab {
+      display: none;
+      position: fixed;
+      bottom: 72px;
+      left: 16px;
+      width: 54px;
+      height: 54px;
+      border-radius: 50%;
+      border: 0;
+      background: var(--green);
+      color: #fff;
+      font-size: 26px;
+      box-shadow: 0 8px 20px rgba(0,0,0,.22);
+      z-index: 1000;
+      cursor: pointer;
+    }
+
+    @media (max-width: 900px) {
+      .filters { grid-template-columns: 1fr 1fr; }
+    }
+
+    @media (max-width: 700px) {
+      .app { grid-template-columns: 1fr; }
+      .sidebar { display: none; }
+      .main { padding: 14px 12px 95px; }
+      .filters, .grid { grid-template-columns: 1fr; }
+      .desktop-table { display: none; }
+      .cards { display: block; }
+      .mobilebar { display: grid; }
+      .fab { display: block; }
+      .toast-msg { bottom: 78px; left: 14px; right: 14px; }
+    }
+  </style>
 </head>
-<body class="lg:h-screen flex flex-col lg:flex-row overflow-x-hidden lg:overflow-hidden text-slate-800">
+<body>
 
-    <!-- القائمة الجانبية (تظهر في الكمبيوتر) -->
-    <aside class="w-60 bg-dga-900 text-white flex-col justify-between shrink-0 shadow-xl z-20 hidden lg:flex">
+<div class="app">
+  <!-- القائمة الجانبية -->
+  <aside class="sidebar">
+    <div>
+      <div class="brand">
+        <div class="logo">🏥</div>
         <div>
-            <div class="p-4 border-b border-white/10 flex items-center gap-3 bg-black/20">
-                <div class="w-10 h-10 rounded-lg bg-dga-600 flex items-center justify-center text-white font-bold text-xl border border-white/20">
-                    <i class="fa-solid fa-hospital-user"></i>
-                </div>
-                <div>
-                    <h1 class="font-extrabold text-sm leading-tight">مدينة الملك سلمان الطبية</h1>
-                    <p class="text-[11px] text-emerald-300 font-medium mt-0.5">مكتب ضابط اتصال التأمين</p>
-                </div>
-            </div>
-
-            <nav class="p-3 space-y-1.5 text-xs font-bold">
-                <p class="px-2 py-1 text-[10px] text-slate-400">تصنيف المعاملات</p>
-                <button onclick="setFilter('all')" id="nav-all" class="w-full flex items-center justify-between px-3 py-2.5 rounded-lg bg-white/15 text-white transition">
-                    <span class="flex items-center gap-2"><i class="fa-solid fa-layer-group text-emerald-400 w-4"></i> جميع الطلبات</span>
-                    <span id="side-total" class="bg-black/30 px-2 py-0.5 rounded text-[11px]">0</span>
-                </button>
-                <button onclick="setFilter('تحت الإجراء')" id="nav-pending" class="w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-slate-300 hover:bg-white/5 transition">
-                    <span class="flex items-center gap-2"><i class="fa-solid fa-hourglass-half text-amber-400 w-4"></i> تحت الإجراء</span>
-                    <span id="side-pending" class="bg-amber-500/20 text-amber-300 px-2 py-0.5 rounded text-[11px]">0</span>
-                </button>
-                <button onclick="setFilter('تم الإنجاز')" id="nav-completed" class="w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-slate-300 hover:bg-white/5 transition">
-                    <span class="flex items-center gap-2"><i class="fa-solid fa-circle-check text-emerald-400 w-4"></i> تم الإنجاز</span>
-                    <span id="side-completed" class="bg-emerald-500/20 text-emerald-300 px-2 py-0.5 rounded text-[11px]">0</span>
-                </button>
-                <button onclick="setFilter('لم يتم تنفيذ المهمة')" id="nav-unexecuted" class="w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-slate-300 hover:bg-white/5 transition">
-                    <span class="flex items-center gap-2"><i class="fa-solid fa-circle-xmark text-rose-400 w-4"></i> لم يتم التنفيذ</span>
-                    <span id="side-unexecuted" class="bg-rose-500/20 text-rose-300 px-2 py-0.5 rounded text-[11px]">0</span>
-                </button>
-            </nav>
+          <h2>KSAMC</h2>
+          <p>مدينة الملك سلمان الطبية<br>تجمع المدينة المنورة الصحي</p>
         </div>
+      </div>
 
-        <div class="p-3 border-t border-white/10 bg-black/20 text-[11px] text-emerald-200/80 text-center">
-            مربوط مباشرة مع Google Sheets
-        </div>
-    </aside>
-
-    <!-- المحتوى الرئيسي -->
-    <div class="flex-1 flex flex-col lg:h-screen overflow-hidden">
-        
-        <!-- الشريط العلوي -->
-        <header class="bg-white border-b border-slate-200 px-4 py-3 flex flex-wrap items-center justify-between gap-3 shrink-0 shadow-xs">
-            <div class="flex items-center gap-2">
-                <div class="lg:hidden w-8 h-8 rounded-lg bg-dga-800 text-white flex items-center justify-center text-sm">
-                    <i class="fa-solid fa-hospital-user"></i>
-                </div>
-                <div>
-                    <h2 class="text-xs sm:text-sm font-extrabold text-slate-800 flex items-center gap-2">
-                        <span>سجل متابعة طلبات التأمين الطبي (KSAMC)</span>
-                        <span class="px-2 py-0.5 text-[10px] rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 font-bold flex items-center gap-1">
-                            <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span> مباشر
-                        </span>
-                    </h2>
-                </div>
-            </div>
-
-            <!-- البحث الفوري -->
-            <div class="flex-1 max-w-md relative w-full sm:w-auto order-3 sm:order-2">
-                <i class="fa-solid fa-magnifying-glass absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
-                <input type="text" id="searchInput" oninput="renderData()" placeholder="ابحث بالاسم، الهوية، رقم الملف، أو الجوال..." 
-                    class="w-full bg-slate-100 focus:bg-white border border-slate-200 focus:border-dga-600 rounded-lg py-1.5 pr-8 pl-3 text-xs focus:outline-none transition">
-            </div>
-
-            <!-- زر التحديث المباشر -->
-            <button onclick="loadSheetData()" class="order-2 sm:order-3 bg-dga-50 hover:bg-emerald-100 text-dga-800 px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 transition border border-emerald-200">
-                <i id="syncIcon" class="fa-solid fa-arrows-rotate text-dga-700"></i>
-                <span>تحديث</span>
-            </button>
-        </header>
-
-        <!-- بطاقات الإحصائيات (تعمل كفلاتر بالضغط عليها في الجوال والكمبيوتر) -->
-        <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5 px-4 pt-3 shrink-0">
-            <div onclick="setFilter('all')" class="bg-white p-3 rounded-xl border border-slate-200 shadow-2xs flex items-center justify-between cursor-pointer hover:border-dga-600 transition">
-                <div>
-                    <p class="text-[11px] font-bold text-slate-500">إجمالي الطلبات</p>
-                    <p id="stat-total" class="text-xl font-extrabold text-slate-800 mt-0.5">0</p>
-                </div>
-                <div class="w-8 h-8 rounded-lg bg-slate-100 text-slate-700 flex items-center justify-center text-xs">
-                    <i class="fa-solid fa-clipboard-list"></i>
-                </div>
-            </div>
-
-            <div onclick="setFilter('تحت الإجراء')" class="bg-white p-3 rounded-xl border border-amber-200 shadow-2xs flex items-center justify-between cursor-pointer hover:border-amber-500 transition">
-                <div>
-                    <p class="text-[11px] font-bold text-amber-700">تحت الإجراء</p>
-                    <p id="stat-pending" class="text-xl font-extrabold text-amber-600 mt-0.5">0</p>
-                </div>
-                <div class="w-8 h-8 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center text-xs border border-amber-200">
-                    <i class="fa-solid fa-hourglass-half"></i>
-                </div>
-            </div>
-
-            <div onclick="setFilter('تم الإنجاز')" class="bg-white p-3 rounded-xl border border-emerald-200 shadow-2xs flex items-center justify-between cursor-pointer hover:border-emerald-600 transition">
-                <div>
-                    <p class="text-[11px] font-bold text-emerald-700">تم الإنجاز</p>
-                    <p id="stat-completed" class="text-xl font-extrabold text-emerald-600 mt-0.5">0</p>
-                </div>
-                <div class="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center text-xs border border-emerald-200">
-                    <i class="fa-solid fa-check-double"></i>
-                </div>
-            </div>
-
-            <div onclick="setFilter('لم يتم تنفيذ المهمة')" class="bg-white p-3 rounded-xl border border-rose-200 shadow-2xs flex items-center justify-between cursor-pointer hover:border-rose-500 transition">
-                <div>
-                    <p class="text-[11px] font-bold text-rose-700">لم يتم التنفيذ</p>
-                    <p id="stat-unexecuted" class="text-xl font-extrabold text-rose-600 mt-0.5">0</p>
-                </div>
-                <div class="w-8 h-8 rounded-lg bg-rose-50 text-rose-600 flex items-center justify-center text-xs border border-rose-200">
-                    <i class="fa-solid fa-triangle-exclamation"></i>
-                </div>
-            </div>
-        </div>
-
-        <!-- منطقة الجدول -->
-        <div class="p-4 flex-1 overflow-hidden flex flex-col">
-            <div class="bg-white rounded-xl border border-slate-200 shadow-2xs flex-1 flex flex-col overflow-hidden">
-                
-                <!-- أزرار الفلترة السريعة -->
-                <div class="px-3 py-2 bg-slate-50 border-b border-slate-200 flex flex-wrap items-center justify-between gap-2 text-xs">
-                    <div class="flex items-center gap-1 overflow-x-auto">
-                        <button onclick="setFilter('all')" id="tab-all" class="px-2.5 py-1 rounded-md font-bold bg-dga-800 text-white transition">الكل</button>
-                        <button onclick="setFilter('تحت الإجراء')" id="tab-pending" class="px-2.5 py-1 rounded-md font-bold text-slate-600 hover:bg-slate-200 transition">تحت الإجراء</button>
-                        <button onclick="setFilter('تم الإنجاز')" id="tab-completed" class="px-2.5 py-1 rounded-md font-bold text-slate-600 hover:bg-slate-200 transition">تم الإنجاز</button>
-                        <button onclick="setFilter('لم يتم تنفيذ المهمة')" id="tab-unexecuted" class="px-2.5 py-1 rounded-md font-bold text-slate-600 hover:bg-slate-200 transition">لم يتم التنفيذ</button>
-                    </div>
-                    <span id="showingCount" class="text-[11px] font-bold text-slate-500">جاري التحميل...</span>
-                </div>
-
-                <!-- الجدول -->
-                <div class="table-container overflow-y-auto overflow-x-auto flex-1">
-                    <table class="w-full text-right border-collapse min-w-[950px]">
-                        <thead class="bg-slate-100 text-slate-700 text-[11px] font-extrabold sticky top-0 z-10 border-b border-slate-200">
-                            <tr>
-                                <th class="py-2.5 px-2.5 w-10 text-center">م</th>
-                                <th class="py-2.5 px-2.5 w-24">التاريخ</th>
-                                <th class="py-2.5 px-3">اسم المريض</th>
-                                <th class="py-2.5 px-2.5">الهوية / الملف</th>
-                                <th class="py-2.5 px-2.5">الجوال</th>
-                                <th class="py-2.5 px-2.5">الجهة / القسم</th>
-                                <th class="py-2.5 px-3">الخدمة والمستندات المطلوبة</th>
-                                <th class="py-2.5 px-2.5">الملاحظات</th>
-                                <th class="py-2.5 px-2.5 text-center">الحالة</th>
-                                <th class="py-2.5 px-2.5 text-center">تواصل</th>
-                            </tr>
-                        </thead>
-                        <tbody id="tableBody" class="divide-y divide-slate-200/70 text-xs">
-                        </tbody>
-                    </table>
-                </div>
-
-            </div>
-        </div>
+      <div class="nav">
+        <button id="nav-home" class="active" onclick="window.showPage('home')">⌂ الرئيسية</button>
+        <button class="add-btn-side" onclick="window.openAddModal()">＋ إضافة معاملة</button>
+        <button id="nav-follow" onclick="window.showPage('follow')">☷ متابعة المعاملات</button>
+        <button id="nav-archive" onclick="window.showPage('archive')">▣ الأرشيف</button>
+        <button id="nav-reports" onclick="window.showPage('reports')">▥ التقارير والمؤشرات</button>
+        <button id="nav-settings" onclick="window.showPage('settings')">⚙ الإعدادات والنسخ الاحتياطي</button>
+      </div>
     </div>
 
-    <script>
-        // رابط القراءة المباشر من الشيت عبر PapaParse بدون أي إعدادات
-        const SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/135L6yG_lk5HPj77mZbUqv3-oZNWWd4T5N6yR6hX3Wk0/gviz/tq?tqx=out:csv&sheet=" + encodeURIComponent("سجل طلبات التأمين");
+    <div class="sidebar-footer">
+      <strong>مزامنة تلقائية فورية</strong><br>
+      الماك ⇄ الجوال بدون إعدادات<br>
+      <span id="liveDateText"></span>
+    </div>
+  </aside>
 
-        let records = [];
-        let currentFilter = 'all';
+  <!-- المحتوى الرئيسي -->
+  <main class="main">
 
-        // تحميل البيانات مباشرة عند فتح الصفحة (وتحديثها تلقائياً كل 30 ثانية)
-        window.onload = () => {
-            loadSheetData();
-            setInterval(loadSheetData, 30000);
-        };
+    <!-- الهيدر -->
+    <div class="header">
+      <div>
+        <h1>نظام متابعة معاملات التأمين الطبي</h1>
+        <div class="sub">مدينة الملك سلمان الطبية | KSAMC | تجمع المدينة المنورة الصحي</div>
+      </div>
+      <div class="header-actions">
+        <div id="cloudStatusPill" class="live-sync-pill">
+          <span class="pulse-dot" id="cloudPulse"></span>
+          <span id="cloudStatusText">جاري الاتصال بالسحابة التلقائية...</span>
+        </div>
+        <button class="btn btn-primary" onclick="window.openAddModal()">＋ معاملة جديدة</button>
+      </div>
+    </div>
 
-        function loadSheetData() {
-            const icon = document.getElementById('syncIcon');
-            icon.classList.add('animate-spin');
+    <!-- بطاقات المؤشرات الأربعة -->
+    <div class="stats">
+      <div class="stat blue" onclick="window.quickFilter('ALL')">
+        <div>
+          <p>إجمالي المعاملات</p>
+          <h3 id="totalCount">0</h3>
+        </div>
+        <div class="icon">📋</div>
+      </div>
 
-            Papa.parse(SHEET_CSV_URL + "&_=" + Date.now(), {
-                download: true,
-                skipEmptyLines: true,
-                complete: function(results) {
-                    icon.classList.remove('animate-spin');
-                    const rows = results.data;
-                    const parsed = [];
+      <div class="stat orange" onclick="window.quickFilter('LATE')">
+        <div>
+          <p>معاملات متأخرة</p>
+          <h3 id="lateCount">0</h3>
+        </div>
+        <div class="icon">⚠️</div>
+      </div>
 
-                    rows.forEach(r => {
-                        const seq = (r[0] || '').trim();
-                        const name = (r[2] || '').trim();
-                        // تخطي صفوف العناوين والإحصائيات العلوية في الشيت
-                        if (!name || name === 'اسم المريض' || isNaN(Number(seq)) || Number(seq) <= 0) return;
+      <div class="stat purple" onclick="window.quickFilter('ACTIVE')">
+        <div>
+          <p>تحت المتابعة</p>
+          <h3 id="progressCount">0</h3>
+        </div>
+        <div class="icon">◷</div>
+      </div>
 
-                        let st = (r[11] || '').trim();
-                        if (st.includes('إنجاز') || st.includes('انجاز') || st.includes('منجز')) st = 'تم الإنجاز';
-                        else if (st.includes('لم يتم')) st = 'لم يتم تنفيذ المهمة';
-                        else st = 'تحت الإجراء';
+      <div class="stat green" onclick="window.quickFilter('DONE')">
+        <div>
+          <p>تم الإنجاز</p>
+          <h3 id="doneCount">0</h3>
+        </div>
+        <div class="icon">✓</div>
+      </div>
+    </div>
 
-                        parsed.push({
-                            seq: Number(seq),
-                            receivedDate: (r[1] || '').trim(),
-                            name: name,
-                            nid: (r[3] || '').trim(),
-                            mrn: (r[4] || '').trim(),
-                            phone: (r[5] || '').replace(/^'/, '').trim(),
-                            company: (r[6] || '').trim(),
-                            requestType: (r[7] || '').trim(),
-                            service: (r[8] || '').trim(),
-                            department: (r[9] || '').trim(),
-                            docs: (r[10] || '').trim(),
-                            status: st,
-                            nonExecReason: (r[12] || '').trim(),
-                            followUpDate: (r[13] || '').trim(),
-                            notes: (r[14] || '').trim()
-                        });
-                    });
+    <!-- قسم جدول المعاملات والفلترة -->
+    <div id="casesSection">
+      <div class="card">
+        <div class="filters">
+          <input id="searchInput" placeholder="🔍 بحث باسم المريض أو رقم الملف MRN أو الهوية أو المستند..." oninput="window.renderCases()" />
+          <select id="typeFilter" onchange="window.renderCases()">
+            <option value="">كل الأنواع</option>
+            <option value="إدارية">إدارية (طلب مستندات)</option>
+            <option value="طبية">طبية (استفسار / تقارير)</option>
+            <option value="حوادث وإصابات عمل">حوادث وإصابات عمل</option>
+          </select>
+          <select id="statusFilter" onchange="window.renderCases()">
+            <option value="">كل الحالات</option>
+            <option value="تحت الإجراء">تحت الإجراء</option>
+            <option value="بانتظار رد التأمين">بانتظار رد التأمين</option>
+            <option value="بانتظار القسم">بانتظار القسم</option>
+            <option value="متأخرة">⚠️ متأخرة</option>
+            <option value="تم الإنجاز">✓ تم الإنجاز</option>
+          </select>
+          <select id="priorityFilter" onchange="window.renderCases()">
+            <option value="">كل الأولويات</option>
+            <option value="عاجلة">🔥 عاجلة</option>
+            <option value="متوسطة">متوسطة</option>
+            <option value="عادية">عادية</option>
+          </select>
+          <button class="btn btn-light" onclick="window.resetFilters()">إعادة ضبط</button>
+        </div>
+      </div>
 
-                    records = parsed;
-                    renderData();
-                },
-                error: function() {
-                    icon.classList.remove('animate-spin');
-                }
-            });
-        }
+      <div class="card">
+        <div class="card-head">
+          <h3>📋 قائمة المعاملات المتزامنة لحظياً</h3>
+          <div style="display:flex;gap:8px;align-items:center">
+            <span class="sub" id="countLabel">0 معاملة</span>
+            <button class="btn btn-light" style="padding:6px 12px;font-size:12px" onclick="window.exportCSV()">📥 تصدير Excel</button>
+          </div>
+        </div>
 
-        function renderData() {
-            const search = document.getElementById('searchInput').value.trim().toLowerCase();
+        <!-- جدول الكمبيوتر والماك -->
+        <div class="table-wrap desktop-table">
+          <table>
+            <thead>
+              <tr>
+                <th>م</th>
+                <th>المريض / الهوية</th>
+                <th>رقم الملف MRN</th>
+                <th>النوع</th>
+                <th>المستند المطلوب</th>
+                <th>القسم / الجهة</th>
+                <th>الأولوية</th>
+                <th>الحالة</th>
+                <th>آخر إجراء / ملاحظات</th>
+                <th>التاريخ</th>
+                <th>إجراءات</th>
+              </tr>
+            </thead>
+            <tbody id="casesTable"></tbody>
+          </table>
+        </div>
 
-            const total = records.length;
-            const pending = records.filter(r => r.status === 'تحت الإجراء').length;
-            const completed = records.filter(r => r.status === 'تم الإنجاز').length;
-            const unexecuted = records.filter(r => r.status === 'لم يتم تنفيذ المهمة').length;
+        <!-- بطاقات الجوال -->
+        <div class="cards" id="mobileCards"></div>
+      </div>
+    </div>
 
-            document.getElementById('stat-total').innerText = total;
-            document.getElementById('stat-pending').innerText = pending;
-            document.getElementById('stat-completed').innerText = completed;
-            document.getElementById('stat-unexecuted').innerText = unexecuted;
+    <!-- قسم التقارير والمؤشرات -->
+    <div class="card" id="reportsSection" style="display:none">
+      <div class="card-head">
+        <h3>📊 التقارير والمؤشرات الإحصائية</h3>
+        <button class="btn btn-light" onclick="window.print()">🖨️ طباعة التقرير</button>
+      </div>
+      <div id="reportsBox" style="line-height:2;font-size:14px"></div>
+    </div>
 
-            document.getElementById('side-total').innerText = total;
-            document.getElementById('side-pending').innerText = pending;
-            document.getElementById('side-completed').innerText = completed;
-            document.getElementById('side-unexecuted').innerText = unexecuted;
+    <!-- قسم الإعدادات والنسخ الاحتياطي -->
+    <div class="card" id="settingsSection" style="display:none">
+      <div class="card-head">
+        <h3>⚙ الإعدادات والنسخ الاحتياطي</h3>
+      </div>
+      <div class="grid">
+        <div>
+          <label>عدد الساعات لتحويل المعاملة إلى متأخرة تلقائياً</label>
+          <input type="number" id="lateHours" value="48" />
+        </div>
+        <div>
+          <label>الجهة / الشركة الافتراضية عند إضافة معاملة</label>
+          <input type="text" id="defaultCompany" value="تجمع المدينة المنورة الصحي - إدارة تنمية الإيرادات (CBO)" />
+        </div>
+        <div class="full">
+          <button class="btn btn-primary" onclick="window.saveSettings()">💾 حفظ الإعدادات</button>
+        </div>
+        <hr class="full" style="border:0;border-top:1px solid #e5edf5;margin:8px 0">
+        <div class="full" style="display:flex;gap:10px;flex-wrap:wrap">
+          <button class="btn btn-green" onclick="window.exportCSV()">📊 تصدير جدول Excel (CSV)</button>
+          <button class="btn btn-primary" onclick="window.exportBackup()">⬇️ تصدير نسخة احتياطية JSON</button>
+          <label class="btn btn-light" style="cursor:pointer">
+            ⬆️ استرجاع نسخة احتياطية
+            <input type="file" hidden onchange="window.importBackup(event)" />
+          </label>
+          <button class="btn btn-orange" onclick="window.restoreDefaultCases()">🔄 استعادة سجلات الشيت الـ 14 الأصلية</button>
+        </div>
+      </div>
+    </div>
 
-            const filtered = records.filter(r => {
-                const matchStatus = currentFilter === 'all' || r.status === currentFilter;
-                const matchSearch = !search || 
-                    r.name.toLowerCase().includes(search) ||
-                    r.nid.toLowerCase().includes(search) ||
-                    r.mrn.toLowerCase().includes(search) ||
-                    r.phone.includes(search) ||
-                    r.service.toLowerCase().includes(search) ||
-                    r.docs.toLowerCase().includes(search);
-                return matchStatus && matchSearch;
-            });
+  </main>
+</div>
 
-            document.getElementById('showingCount').innerText = `يعرض ${filtered.length} من ${total} معاملة`;
+<!-- شريط الجوال السفلي -->
+<div class="mobilebar">
+  <button id="mnav-home" class="active" onclick="window.showPage('home')">الرئيسية</button>
+  <button id="mnav-follow" onclick="window.showPage('follow')">المتابعة</button>
+  <button id="mnav-archive" onclick="window.showPage('archive')">الأرشيف</button>
+  <button id="mnav-settings" onclick="window.showPage('settings')">الإعدادات</button>
+</div>
 
-            const tbody = document.getElementById('tableBody');
-            if (filtered.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="10" class="py-12 text-center text-slate-400 font-bold">لا توجد معاملات مطابقة</td></tr>`;
-                return;
+<!-- زر الإضافة العائم في الجوال -->
+<button class="fab" onclick="window.openAddModal()">＋</button>
+
+<!-- نافذة إضافة / تعديل معاملة -->
+<div class="modal" id="caseModal">
+  <div class="modal-box">
+    <div class="modal-head">
+      <h3 id="modalTitle">إضافة معاملة تأمين طبي</h3>
+      <button class="btn btn-light" onclick="window.closeModal()">✕ إغلاق</button>
+    </div>
+
+    <div class="grid">
+      <div>
+        <label>اسم المريض *</label>
+        <input id="name" placeholder="مثال: RAWAN HULAYYIL ALSUHAYMI" />
+      </div>
+      <div>
+        <label>رقم الملف الطبي (MRN) *</label>
+        <input id="mrn" placeholder="مثال: 1159793" />
+      </div>
+
+      <div>
+        <label>رقم الهوية / الإقامة / الجواز</label>
+        <input id="nationalId" placeholder="مثال: 1100772043" />
+      </div>
+      <div>
+        <label>رقم جوال المريض (للواتساب المباشر)</label>
+        <input id="phone" placeholder="05xxxxxxxx" dir="ltr" style="text-align:right" />
+      </div>
+
+      <div>
+        <label>نوع المعاملة</label>
+        <select id="type">
+          <option value="إدارية">إدارية (طلب مستندات)</option>
+          <option value="طبية">طبية (تقارير / استفسار)</option>
+          <option value="حوادث وإصابات عمل">حوادث وإصابات عمل</option>
+        </select>
+      </div>
+
+      <div>
+        <label>القسم / المستشفى (KSAMC)</label>
+        <input id="department" value="مدينة الملك سلمان الطبية (KSAMC)" />
+      </div>
+
+      <div class="full">
+        <label>المستند المطلوب * (يظهر في رسالة الواتساب للمريض)</label>
+        <input id="document" placeholder="اكتب المستند المطلوب أو اختر بضغطة زر من الاختصارات أدناه..." />
+        <div class="doc-chips">
+          <span class="doc-chip" onclick="window.addChip('صورة جواز السفر')">+ صورة جواز السفر</span>
+          <span class="doc-chip" onclick="window.addChip('برنت أبشر ببيانات الدخول')">+ برنت أبشر ببيانات الدخول</span>
+          <span class="doc-chip" onclick="window.addChip('ختم الدخول')">+ ختم الدخول</span>
+          <span class="doc-chip" onclick="window.addChip('صورة تأشيرة الزيارة')">+ صورة تأشيرة الزيارة</span>
+          <span class="doc-chip" onclick="window.addChip('خطاب التحويل من المستشفى الخاص')">+ خطاب التحويل</span>
+          <span class="doc-chip" onclick="window.addChip('الأشعة التشخيصية / تقرير طبي')">+ أشعة تشخيصية / تقرير</span>
+          <span class="doc-chip" onclick="window.addChip('تقرير تفاصيل الإصابة وإفادة إصابة العمل')">+ إفادة إصابة عمل</span>
+        </div>
+      </div>
+
+      <div>
+        <label>شركة التأمين / الجهة الطالبة</label>
+        <input id="company" value="تجمع المدينة المنورة الصحي - إدارة تنمية الإيرادات (CBO)" />
+      </div>
+
+      <div>
+        <label>الأولوية</label>
+        <select id="priority">
+          <option value="عادية">عادية</option>
+          <option value="متوسطة">متوسطة</option>
+          <option value="عاجلة">🔥 عاجلة</option>
+        </select>
+      </div>
+
+      <div>
+        <label>حالة المعاملة</label>
+        <select id="status">
+          <option value="تحت الإجراء">تحت الإجراء</option>
+          <option value="بانتظار رد التأمين">بانتظار رد التأمين</option>
+          <option value="بانتظار القسم">بانتظار القسم</option>
+          <option value="تم الإنجاز">✓ تم الإنجاز</option>
+        </select>
+      </div>
+
+      <div>
+        <label>ملاحظة سريعة / آخر إجراء</label>
+        <input id="notes" placeholder="مثال: تحت الإجراء..." />
+      </div>
+    </div>
+
+    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:16px;padding-top:12px;border-top:1px solid var(--line)">
+      <button class="btn btn-light" onclick="window.closeModal()">إلغاء</button>
+      <button class="btn btn-primary" onclick="window.saveCase()">💾 حفظ ومزامنة فورية</button>
+    </div>
+  </div>
+</div>
+
+<!-- نافذة تفاصيل المعاملة والسجل الزمني -->
+<div class="modal" id="detailsModal">
+  <div class="modal-box">
+    <div class="modal-head">
+      <h3>📄 تفاصيل المعاملة والسجل الزمني</h3>
+      <button class="btn btn-light" onclick="window.closeDetails()">✕ إغلاق</button>
+    </div>
+    <div id="detailsContent"></div>
+  </div>
+</div>
+
+<!-- إشعار التوست -->
+<div id="toastMsg" class="toast-msg"></div>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+  import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+  import { getFirestore, collection, doc, setDoc, deleteDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+  const STORAGE_KEY = "KSAMC_DEMO_V3";
+  const SETTINGS_KEY = "KSAMC_SETTINGS_V3";
+
+  // السجلات الـ 14 الحقيقية الخاصة بك من سجل متابعة طلبات التأمين
+  const SEED_CASES = [
+    {
+      id: "14",
+      seq: 14,
+      created: "2026-11-05",
+      name: "RAWAN HULAYYIL QUWAYFAN ALSUHAYMI",
+      nationalId: "1100772043",
+      mrn: "1159793",
+      phone: "0564134610",
+      company: "تجمع المدينة المنورة الصحي - الموافقات المركزية",
+      type: "طبية",
+      department: "مدينة الملك سلمان الطبية (KSAMC)",
+      document: "الأشعة التشخيصية للتصوير حول الشرخ",
+      priority: "عاجلة",
+      status: "تحت الإجراء",
+      notes: "تحت الإجراء",
+      history: [{ text: "تم تسجيل المعاملة من الإيميل وهي تحت الإجراء", date: "2026-11-05" }]
+    },
+    {
+      id: "13",
+      seq: 13,
+      created: "2026-10-31",
+      name: "MURADI AHMED KUWAYBIR SALEM",
+      nationalId: "1084746351",
+      mrn: "1566750",
+      phone: "0591033702",
+      company: "تجمع المدينة المنورة الصحي - إدارة الموافقات المركزية",
+      type: "طبية",
+      department: "مدينة الملك سلمان الطبية (KSAMC)",
+      document: "إفادة بتاريخ أول تشخيص للورم الليفي بالرحم",
+      priority: "متوسطة",
+      status: "تحت الإجراء",
+      notes: "للتجربة فقط: نسخة مستقلة من صورة الإيميل",
+      history: [{ text: "نسخة مستقلة للمتابعة تحت الإجراء", date: "2026-11-05" }]
+    },
+    {
+      id: "12",
+      seq: 12,
+      created: "2026-11-04",
+      name: "SANA ABDULLAH AHMED BIN MAHFUTH",
+      nationalId: "1040657130",
+      mrn: "489207",
+      phone: "0551709210",
+      company: "تجمع المدينة المنورة الصحي - الموافقات الطبية (CBO)",
+      type: "طبية",
+      department: "مدينة الملك سلمان الطبية العام (KSAMC - General) / د. خالد المطيري",
+      document: "تأكيد إشعاعي للتشخيص (Radiological confirmation of the diagnosis)",
+      priority: "عاجلة",
+      status: "تحت الإجراء",
+      notes: "مطالبة تأمينية تحت المتابعة",
+      history: [{ text: "تم استلام الطلب وتحويله للقسم المختص للمتابعة", date: "2026-11-04" }]
+    },
+    {
+      id: "11",
+      seq: 11,
+      created: "2026-11-04",
+      name: "TFLAH MOHAMMED Mustajab",
+      nationalId: "P0044604",
+      mrn: "1670714",
+      phone: "0557472805",
+      company: "تجمع المدينة المنورة الصحي - الموافقات الطبية (CBO)",
+      type: "إدارية",
+      department: "مستشفى الولادة والأطفال - مدينة الملك سلمان الطبية (KSAMC)",
+      document: "مستندات هوية الأم لفتح الملف",
+      priority: "عادية",
+      status: "تم الإنجاز",
+      notes: "تم فتح ملف لأم الطفلة وإنجاز الطلب",
+      history: [{ text: "تم فتح الملف وإنجاز الطلب", date: "2026-11-04" }]
+    },
+    {
+      id: "10",
+      seq: 10,
+      created: "2026-11-02",
+      name: "SULTAN GHASSAN MOHAMMED Alkotani",
+      nationalId: "1147293995",
+      mrn: "1616020",
+      phone: "",
+      company: "الإدارة الطبية - مدينة الملك سلمان الطبية",
+      type: "طبية",
+      department: "الإدارة الطبية - مدينة الملك سلمان الطبية",
+      document: "تقرير كتلة الجسم (BMI inbody report)",
+      priority: "عادية",
+      status: "تم الإنجاز",
+      notes: "تم إرفاق تقرير كتلة الجسم، وتتحول للإدارة الطبية",
+      history: [{ text: "تم إرفاق تقرير كتلة الجسم وتحويلها للإدارة الطبية", date: "2026-11-05" }]
+    },
+    {
+      id: "9",
+      seq: 9,
+      created: "2026-11-02",
+      name: "Alia Khatoon Fiaz Khan",
+      nationalId: "BU4178914",
+      mrn: "1670143",
+      phone: "0559192825",
+      company: "تجمع المدينة المنورة الصحي - إدارة تنمية الإيرادات (CBO)",
+      type: "إدارية",
+      department: "مدينة الملك سلمان الطبية (KSAMC)",
+      document: "صورة التحويل من مستشفى المواساة",
+      priority: "عادية",
+      status: "تم الإنجاز",
+      notes: "تم الإنجاز",
+      history: [{ text: "تم إرفاق صورة التحويل وإغلاق الطلب", date: "2026-11-02" }]
+    },
+    {
+      id: "8",
+      seq: 8,
+      created: "2026-11-01",
+      name: "BOY SAMIA MORSHEED RAJEH",
+      nationalId: "12879270",
+      mrn: "12879270",
+      phone: "0561699676",
+      company: "تجمع المدينة المنورة الصحي - إدارة تنمية الإيرادات (CBO)",
+      type: "إدارية",
+      department: "مستشفى الولادة والأطفال - مدينة الملك سلمان الطبية (KSAMC)",
+      document: "تقرير سونار الحمل، تاريخ الحمل، تقرير الولادة، تقرير التحويل، صورة الجواز، ختم الدخول",
+      priority: "متوسطة",
+      status: "تم الإنجاز",
+      notes: "لم ترسل كامل المستندات ولم يتم الرد على جوال المريض",
+      history: [{ text: "تمت المتابعة وإغلاق الطلب بالملاحظات المسجلة", date: "2026-11-04" }]
+    },
+    {
+      id: "7",
+      seq: 7,
+      created: "2026-10-30",
+      name: "NAEMA ELTAGI AID AHMED",
+      nationalId: "P12345347",
+      mrn: "1669663",
+      phone: "0546054339",
+      company: "تجمع المدينة المنورة الصحي - إدارة تنمية الإيرادات (CBO)",
+      type: "إدارية",
+      department: "مدينة الملك سلمان الطبية (KSAMC)",
+      document: "صورة التأشيرة (الفيزا) + برنت من أبشر",
+      priority: "عادية",
+      status: "تم الإنجاز",
+      notes: "تم استلام التأشيرة وبرنت أبشر وإنهاء الطلب بنجاح",
+      history: [{ text: "تم استلام التأشيرة وبرنت أبشر وإنهاء الطلب بنجاح", date: "2026-11-01" }]
+    },
+    {
+      id: "6",
+      seq: 6,
+      created: "2026-10-31",
+      name: "GIRL FATEMAH FAKHAR EL DEIN KAN",
+      nationalId: "2153604638",
+      mrn: "1669754",
+      phone: "0536682383",
+      company: "تجمع المدينة المنورة الصحي - إدارة تنمية الإيرادات (CBO)",
+      type: "إدارية",
+      department: "مدينة الملك سلمان الطبية (KSAMC)",
+      document: "خطاب التحويل من المستشفى الخاص",
+      priority: "عاجلة",
+      status: "تم الإنجاز",
+      notes: "تم إرفاق خطاب التحويل وفتح الملف وإنهاء الطلب بنجاح",
+      history: [{ text: "تم إرفاق خطاب التحويل وفتح الملف وإنهاء الطلب بنجاح", date: "2026-11-01" }]
+    },
+    {
+      id: "5",
+      seq: 5,
+      created: "2026-10-31",
+      name: "ROANZA ASAAD SRBYNY ISMAIL",
+      nationalId: "A28012535",
+      mrn: "1669684",
+      phone: "0543746672",
+      company: "تجمع المدينة المنورة الصحي - إدارة تنمية الإيرادات (CBO)",
+      type: "إدارية",
+      department: "مدينة الملك سلمان الطبية (KSAMC)",
+      document: "صورة ختم الدخول من الجواز أو برنت الدخول",
+      priority: "عادية",
+      status: "تم الإنجاز",
+      notes: "تم إرفاق ختم الدخول وإنهاء الطلب بنجاح",
+      history: [{ text: "تم إرفاق ختم الدخول وإنهاء الطلب بنجاح", date: "2026-11-01" }]
+    },
+    {
+      id: "4",
+      seq: 4,
+      created: "2026-10-31",
+      name: "MURADI AHMED KUWAYBIR SALEM",
+      nationalId: "1084746351",
+      mrn: "1566750",
+      phone: "0591033702",
+      company: "تجمع المدينة المنورة الصحي - إدارة تنمية الإيرادات (CBO)",
+      type: "طبية",
+      department: "مدينة الملك سلمان الطبية (KSAMC)",
+      document: "تقرير طبي يوضح تاريخ أول تشخيص للورم الليفي بالرحم",
+      priority: "عادية",
+      status: "تم الإنجاز",
+      notes: "تم الإفادة بأن التشخيص كان قبل شهرين تقريباً وتم إنهاء الطلب",
+      history: [{ text: "تم الإفادة بأن التشخيص كان قبل شهرين تقريباً وإنهاء الطلب", date: "2026-11-01" }]
+    },
+    {
+      id: "3",
+      seq: 3,
+      created: "2026-10-31",
+      name: "JAWAHER OMER ABD ALRAHMAN Bakes",
+      nationalId: "09489238",
+      mrn: "1669942",
+      phone: "0576763340",
+      company: "تجمع المدينة المنورة الصحي - إدارة تنمية الإيرادات (CBO)",
+      type: "إدارية",
+      department: "مدينة الملك سلمان الطبية (KSAMC)",
+      document: "صورة تأشيرة الزيارة + برنت أبشر موضحاً به تاريخ وختم الدخول",
+      priority: "عادية",
+      status: "تم الإنجاز",
+      notes: "تم استلام المستندات وإنهاء الطلب بنجاح",
+      history: [{ text: "تم استلام المستندات وإنهاء الطلب بنجاح", date: "2026-11-01" }]
+    },
+    {
+      id: "2",
+      seq: 2,
+      created: "2026-10-22",
+      name: "ABDULLH ABDULGANI I ALSHAREF",
+      nationalId: "1086730601",
+      mrn: "1666508",
+      phone: "0566476067",
+      company: "تجمع المدينة المنورة الصحي - الموافقات الطبية (CBO)",
+      type: "حوادث وإصابات عمل",
+      department: "التنويم - مدينة الملك سلمان الطبية (KSAMC)",
+      document: "تقرير تفاصيل الإصابة وإفادة إصابة العمل",
+      priority: "عادية",
+      status: "تم الإنجاز",
+      notes: "تم الانتهاء من الطلب وإغلاقه",
+      history: [{ text: "تم الانتهاء من الطلب وإغلاقه", date: "2026-10-31" }]
+    },
+    {
+      id: "1",
+      seq: 1,
+      created: "2026-10-22",
+      name: "SAFIYA MAMA SEDEK KOF",
+      nationalId: "KP0282609",
+      mrn: "1666685",
+      phone: "0570273395",
+      company: "تجمع المدينة المنورة الصحي - إدارة تنمية الإيرادات (CBO)",
+      type: "إدارية",
+      department: "مدينة الملك سلمان الطبية (KSAMC)",
+      document: "صورة جواز السفر + برنت أبشر ببيانات الدخول",
+      priority: "عادية",
+      status: "تم الإنجاز",
+      notes: "تم الانتهاء من الطلب وإغلاقه",
+      history: [{ text: "تم الانتهاء من الطلب وإغلاقه", date: "2026-10-31" }]
+    }
+  ];
+
+  let cases = JSON.parse(localStorage.getItem(STORAGE_KEY) || "null") || JSON.parse(JSON.stringify(SEED_CASES));
+  let settings = JSON.parse(localStorage.getItem(SETTINGS_KEY) || '{"lateHours":48,"defaultCompany":"تجمع المدينة المنورة الصحي - إدارة تنمية الإيرادات (CBO)"}');
+  let currentPage = "home";
+  let editId = null;
+
+  let db = null;
+  let user = null;
+  let isCloudConnected = false;
+  let hasSeededCloud = false;
+  const appId = typeof __app_id !== "undefined" ? __app_id : "ksAMC-insurance-sync";
+
+  // تهيئة الاتصال السحابي الفوري تلقائياً بدون أي تدخل من المستخدم
+  async function initZeroConfigCloud() {
+    try {
+      if (typeof __firebase_config === "undefined" || !__firebase_config) {
+        updateCloudUI(false, "يعمل محلياً");
+        return;
+      }
+
+      const firebaseConfig = JSON.parse(__firebase_config);
+      const app = initializeApp(firebaseConfig);
+      const auth = getAuth(app);
+      db = getFirestore(app);
+
+      // RULE 3: المصادقة التلقائية أولاً قبل أي عملية قراءة أو كتابة
+      if (typeof __initial_auth_token !== "undefined" && __initial_auth_token) {
+        const cred = await signInWithCustomToken(auth, __initial_auth_token);
+        user = cred.user;
+      } else {
+        const cred = await signInAnonymously(auth);
+        user = cred.user;
+      }
+
+      if (!user) return;
+
+      // RULE 1 & 2: مسار مشترك موحد بين الماك والجوال مع استماع لحظي
+      const colRef = collection(db, "artifacts", appId, "public", "data", "ksAMC_insurance_cases");
+
+      onSnapshot(
+        colRef,
+        async (snapshot) => {
+          isCloudConnected = true;
+          updateCloudUI(true, "متصل بالسحابة (مزامنة فورية تلقائية: الماك ⇄ الجوال)");
+
+          if (snapshot.empty && !hasSeededCloud) {
+            hasSeededCloud = true;
+            for (const item of SEED_CASES) {
+              const docRef = doc(db, "artifacts", appId, "public", "data", "ksAMC_insurance_cases", String(item.id));
+              await setDoc(docRef, item);
             }
+            return;
+          }
 
-            tbody.innerHTML = filtered.map(item => {
-                let badgeClass = 'bg-amber-50 text-amber-700 border-amber-300';
-                let dotClass = 'bg-amber-500';
-                if (item.status === 'تم الإنجاز') {
-                    badgeClass = 'bg-emerald-50 text-emerald-700 border-emerald-300';
-                    dotClass = 'bg-emerald-500';
-                } else if (item.status === 'لم يتم تنفيذ المهمة') {
-                    badgeClass = 'bg-rose-50 text-rose-700 border-rose-300';
-                    dotClass = 'bg-rose-500';
-                }
+          const remoteCases = [];
+          snapshot.forEach((docSnap) => {
+            remoteCases.push(docSnap.data());
+          });
 
-                const rawPhone = (item.phone || '').replace(/[^0-9]/g, '');
-                const cleanPhone = rawPhone.startsWith('0') ? '966' + rawPhone.slice(1) : (rawPhone.startsWith('966') ? rawPhone : '966' + rawPhone);
-                const waMessage = encodeURIComponent(
-                    `السلام عليكم ورحمة الله وبركاته،\n` +
-                    `عزيزي المستفيد / *${item.name}*\n` +
-                    `معكم مكتب ضابط اتصال التأمين الطبي بمدينة الملك سلمان الطبية (KSAMC) بالمدينة المنورة.\n\n` +
-                    `بخصوص ملفكم الطبي رقم (${item.mrn || 'غير محدد'})، نأمل منكم التكرم بتزويدنا بالمستندات التالية لاستكمال إجراءات التأمين الطبي:\n` +
-                    `📌 *${item.docs || item.service}*\n\n` +
-                    `شاكرين تعاونكم، ومتمنين لكم دوام الصحة والعافية.`
-                );
-                const waUrl = rawPhone ? `https://wa.me/${cleanPhone}?text=${waMessage}` : '#';
-
-                return `
-                <tr class="hover:bg-slate-50 transition align-top">
-                    <td class="py-2.5 px-2.5 text-center font-mono font-bold text-slate-500 text-[11px]">${item.seq}</td>
-                    <td class="py-2.5 px-2.5 font-mono text-slate-600 text-[11px] whitespace-nowrap">${item.receivedDate || '-'}</td>
-                    <td class="py-2.5 px-3">
-                        <div class="font-extrabold text-slate-800 text-xs">${item.name}</div>
-                        <div class="text-[10px] text-dga-700 font-bold mt-0.5">${item.requestType || ''}</div>
-                    </td>
-                    <td class="py-2.5 px-2.5 font-mono text-[11px]">
-                        <div class="text-slate-700 font-bold">${item.nid || '-'}</div>
-                        <div class="text-slate-500 text-[10px]">ملف: ${item.mrn || '-'}</div>
-                    </td>
-                    <td class="py-2.5 px-2.5 font-mono text-slate-700 text-[11px] whitespace-nowrap" dir="ltr">${item.phone || '-'}</td>
-                    <td class="py-2.5 px-2.5 text-[11px]">
-                        <div class="font-bold text-slate-700">${item.company || '-'}</div>
-                        <div class="text-[10px] text-slate-500">${item.department || ''}</div>
-                    </td>
-                    <td class="py-2.5 px-3 text-[11px]">
-                        <div class="font-bold text-slate-800">${item.service || '-'}</div>
-                        <div class="text-amber-800 bg-amber-50 border border-amber-200/60 rounded px-1.5 py-0.5 mt-1 text-[10px]">
-                            <span class="font-bold">المطلوب:</span> ${item.docs || '-'}
-                        </div>
-                    </td>
-                    <td class="py-2.5 px-2.5 text-[11px] text-slate-600">
-                        <div>${item.notes || '-'}</div>
-                        ${item.followUpDate ? `<div class="text-[10px] font-mono text-slate-400 mt-0.5">متابعة: ${item.followUpDate}</div>` : ''}
-                    </td>
-                    <td class="py-2.5 px-2.5 text-center whitespace-nowrap">
-                        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold border ${badgeClass}">
-                            <span class="w-1.5 h-1.5 rounded-full ${dotClass}"></span>
-                            <span>${item.status}</span>
-                        </span>
-                    </td>
-                    <td class="py-2.5 px-2.5 text-center whitespace-nowrap">
-                        ${rawPhone ? `
-                        <a href="${waUrl}" target="_blank" class="bg-emerald-600 hover:bg-emerald-700 text-white px-2.5 py-1 rounded-md text-[11px] font-bold inline-flex items-center gap-1 shadow-2xs transition">
-                            <i class="fa-brands fa-whatsapp"></i> واتساب
-                        </a>` : `<span class="text-slate-400 text-[10px]">لا يوجد</span>`}
-                    </td>
-                </tr>`;
-            }).join('');
+          if (remoteCases.length > 0) {
+            remoteCases.sort((a, b) => (Number(b.seq) || 0) - (Number(a.seq) || 0));
+            cases = remoteCases;
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(cases));
+            window.renderCases();
+          }
+        },
+        (error) => {
+          console.error("Cloud Sync Error:", error);
+          updateCloudUI(false, "حفظ محلي مؤقت");
         }
+      );
+    } catch (e) {
+      console.error("Init Cloud Error:", e);
+      updateCloudUI(false, "حفظ محلي");
+    }
+  }
 
-        function setFilter(status) {
-            currentFilter = status;
-            const map = { 'all': 'all', 'تحت الإجراء': 'pending', 'تم الإنجاز': 'completed', 'لم يتم تنفيذ المهمة': 'unexecuted' };
-            const activeKey = map[status];
+  function updateCloudUI(connected, text) {
+    const pill = document.getElementById("cloudStatusPill");
+    const txt = document.getElementById("cloudStatusText");
+    if (!pill || !txt) return;
+    txt.innerText = text;
+    pill.className = connected ? "live-sync-pill" : "live-sync-pill syncing";
+  }
 
-            ['all', 'pending', 'completed', 'unexecuted'].forEach(key => {
-                const tab = document.getElementById(`tab-${key}`);
-                const nav = document.getElementById(`nav-${key}`);
-                if (tab) {
-                    tab.className = key === activeKey 
-                        ? "px-2.5 py-1 rounded-md font-bold bg-dga-800 text-white transition"
-                        : "px-2.5 py-1 rounded-md font-bold text-slate-600 hover:bg-slate-200 transition";
-                }
-                if (nav) {
-                    nav.className = key === activeKey
-                        ? "w-full flex items-center justify-between px-3 py-2.5 rounded-lg bg-white/15 text-white transition"
-                        : "w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-slate-300 hover:bg-white/5 transition";
-                }
-            });
-            renderData();
+  async function saveSingleCaseToCloud(caseObj) {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(cases));
+    if (!db || !user) return;
+    try {
+      const docRef = doc(db, "artifacts", appId, "public", "data", "ksAMC_insurance_cases", String(caseObj.id));
+      await setDoc(docRef, caseObj);
+    } catch (e) {
+      console.error("Error writing case to cloud:", e);
+    }
+  }
+
+  async function deleteSingleCaseFromCloud(id) {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(cases));
+    if (!db || !user) return;
+    try {
+      const docRef = doc(db, "artifacts", appId, "public", "data", "ksAMC_insurance_cases", String(id));
+      await deleteDoc(docRef);
+    } catch (e) {
+      console.error("Error deleting case from cloud:", e);
+    }
+  }
+
+  function showToast(msg) {
+    const el = document.getElementById("toastMsg");
+    el.innerHTML = `<span>✅</span> <span>${msg}</span>`;
+    el.style.display = "flex";
+    clearTimeout(window._toastTimer);
+    window._toastTimer = setTimeout(() => {
+      el.style.display = "none";
+    }, 3200);
+  }
+
+  function isLate(c) {
+    if (c.status === "تم الإنجاز") return false;
+    const t = new Date(c.created).getTime();
+    if (isNaN(t)) return false;
+    const hours = (Date.now() - t) / 3600000;
+    return hours >= Number(settings.lateHours || 48);
+  }
+
+  function statusBadge(c) {
+    if (c.status === "تم الإنجاز") return `<span class="badge b-done">✓ تم الإنجاز</span>`;
+    if (isLate(c)) return `<span class="badge b-late">⚠️ متأخرة (${c.status})</span>`;
+    return `<span class="badge b-progress">${c.status}</span>`;
+  }
+
+  function priorityBadge(p) {
+    if (p === "عاجلة") return `<span class="badge p-high">🔥 عاجلة</span>`;
+    if (p === "متوسطة") return `<span class="badge p-mid">متوسطة</span>`;
+    return `<span class="badge p-low">عادية</span>`;
+  }
+
+  function buildWhatsAppUrl(c) {
+    let cleanPhone = (c.phone || "").replace(/\D/g, "");
+    if (cleanPhone.startsWith("05")) cleanPhone = "966" + cleanPhone.slice(1);
+    else if (cleanPhone.startsWith("5") && cleanPhone.length === 9) cleanPhone = "966" + cleanPhone;
+
+    const msg = `السلام عليكم ورحمة الله وبركاته،
+نفيدكم بأنه لاستكمال الملفات الناقصة الخاصة بالمريض لدى مدينة الملك سلمان الطبية، نأمل التكرم بتزويدنا بالمستند التالي لإرفاقه لدى شركة التأمين:
+
+*اسم المريض*: ${c.name}
+*رقم الملف*: ${c.mrn}
+
+*المستند المطلوب:*
+${c.document}
+
+نأمل إرسال المستند في أقرب وقت ممكن لاستكمال الإجراءات.
+شاكرين لكم حسن تعاونكم وتقديركم.`;
+
+    return `https://wa.me/${cleanPhone}?text=${encodeURIComponent(msg)}`;
+  }
+
+  window.renderCases = function() {
+    const q = document.getElementById("searchInput").value.trim().toLowerCase();
+    const t = document.getElementById("typeFilter").value;
+    const s = document.getElementById("statusFilter").value;
+    const p = document.getElementById("priorityFilter").value;
+
+    document.getElementById("totalCount").innerText = cases.length;
+    document.getElementById("lateCount").innerText = cases.filter(c => isLate(c)).length;
+    document.getElementById("progressCount").innerText = cases.filter(c => c.status !== "تم الإنجاز").length;
+    document.getElementById("doneCount").innerText = cases.filter(c => c.status === "تم الإنجاز").length;
+
+    const filtered = cases.filter(c => {
+      if (currentPage === "follow" && c.status === "تم الإنجاز") return false;
+      if (currentPage === "archive" && c.status !== "تم الإنجاز") return false;
+
+      const matchQ = !q ||
+        (c.name || "").toLowerCase().includes(q) ||
+        (c.mrn || "").toLowerCase().includes(q) ||
+        (c.nationalId || "").toLowerCase().includes(q) ||
+        (c.document || "").toLowerCase().includes(q);
+
+      const matchT = !t || c.type === t;
+      const matchP = !p || c.priority === p;
+      const matchS = !s || (s === "متأخرة" ? isLate(c) : c.status === s);
+
+      return matchQ && matchT && matchP && matchS;
+    });
+
+    document.getElementById("countLabel").innerText = `${filtered.length} معاملة`;
+
+    const tbody = document.getElementById("casesTable");
+    const mobile = document.getElementById("mobileCards");
+
+    if (filtered.length === 0) {
+      const empty = `<div style="text-align:center;padding:28px;color:var(--muted)">لا توجد معاملات مطابقة للبحث</div>`;
+      tbody.innerHTML = `<tr><td colspan="11">${empty}</td></tr>`;
+      mobile.innerHTML = empty;
+      renderReports();
+      return;
+    }
+
+    tbody.innerHTML = filtered.map((c, idx) => {
+      const wa = buildWhatsAppUrl(c);
+      return `
+      <tr>
+        <td><strong>${c.seq || (filtered.length - idx)}</strong></td>
+        <td>
+          <strong style="color:var(--dark)">${c.name}</strong>
+          <div class="sub">هوية: ${c.nationalId || "—"} ${c.phone ? `| 📱 ${c.phone}` : ""}</div>
+        </td>
+        <td><strong style="font-family:monospace;font-size:13.5px">${c.mrn}</strong></td>
+        <td>${c.type}</td>
+        <td style="max-width:220px">${c.document}</td>
+        <td style="max-width:180px;font-size:12px">${c.department || "KSAMC"}</td>
+        <td>${priorityBadge(c.priority)}</td>
+        <td>${statusBadge(c)}</td>
+        <td style="max-width:190px;font-size:12px;color:#475569">${c.notes || "—"}</td>
+        <td style="white-space:nowrap;font-size:12px">${c.created || "—"}</td>
+        <td>
+          <div class="actions">
+            <button class="btn-light" onclick="window.openDetails('${c.id}')">التفاصيل</button>
+            ${c.status !== "تم الإنجاز" ? `<button class="btn-green" onclick="window.markDone('${c.id}')">✓ إنجاز</button>` : ""}
+            <button class="btn-orange" onclick="window.editCase('${c.id}')">تعديل</button>
+            <a class="btn-green" target="_blank" href="${wa}">واتساب</a>
+          </div>
+        </td>
+      </tr>`;
+    }).join("");
+
+    mobile.innerHTML = filtered.map(c => {
+      const wa = buildWhatsAppUrl(c);
+      return `
+      <div class="case-card">
+        <div class="case-top">
+          <div>
+            <div class="case-name">${c.name}</div>
+            <div class="sub">رقم الملف: <strong>${c.mrn}</strong> | هوية: ${c.nationalId || "—"}</div>
+          </div>
+          ${statusBadge(c)}
+        </div>
+        <div class="case-meta">
+          <div>📌 <strong>النوع:</strong> ${c.type}</div>
+          <div>📄 <strong>المستند المطلوب:</strong> ${c.document}</div>
+          <div>🏥 <strong>القسم:</strong> ${c.department || "KSAMC"}</div>
+          <div>📝 <strong>آخر إجراء:</strong> ${c.notes || "—"}</div>
+          <div>📅 <strong>التاريخ:</strong> ${c.created || "—"}</div>
+        </div>
+        <div class="actions">
+          <button class="btn-light" onclick="window.openDetails('${c.id}')">التفاصيل</button>
+          ${c.status !== "تم الإنجاز" ? `<button class="btn-green" onclick="window.markDone('${c.id}')">✓ إنجاز</button>` : ""}
+          <button class="btn-orange" onclick="window.editCase('${c.id}')">تعديل</button>
+          <a class="btn-green" target="_blank" href="${wa}">💬 واتساب</a>
+        </div>
+      </div>`;
+    }).join("");
+
+    renderReports();
+  };
+
+  window.quickFilter = function(mode) {
+    document.getElementById("searchInput").value = "";
+    document.getElementById("typeFilter").value = "";
+    document.getElementById("priorityFilter").value = "";
+    if (mode === "ALL") {
+      document.getElementById("statusFilter").value = "";
+      window.showPage("home");
+    } else if (mode === "LATE") {
+      document.getElementById("statusFilter").value = "متأخرة";
+      window.showPage("follow");
+    } else if (mode === "ACTIVE") {
+      document.getElementById("statusFilter").value = "";
+      window.showPage("follow");
+    } else if (mode === "DONE") {
+      document.getElementById("statusFilter").value = "";
+      window.showPage("archive");
+    }
+  };
+
+  window.resetFilters = function() {
+    document.getElementById("searchInput").value = "";
+    document.getElementById("typeFilter").value = "";
+    document.getElementById("statusFilter").value = "";
+    document.getElementById("priorityFilter").value = "";
+    window.renderCases();
+  };
+
+  window.addChip = function(text) {
+    const inp = document.getElementById("document");
+    inp.value = inp.value.trim() ? inp.value.trim() + " + " + text : text;
+  };
+
+  window.openAddModal = function() {
+    editId = null;
+    document.getElementById("modalTitle").innerText = "＋ إضافة معاملة تأمين طبي";
+    document.getElementById("name").value = "";
+    document.getElementById("mrn").value = "";
+    document.getElementById("nationalId").value = "";
+    document.getElementById("phone").value = "";
+    document.getElementById("type").value = "إدارية";
+    document.getElementById("department").value = "مدينة الملك سلمان الطبية (KSAMC)";
+    document.getElementById("document").value = "";
+    document.getElementById("company").value = settings.defaultCompany || "تجمع المدينة المنورة الصحي - إدارة تنمية الإيرادات (CBO)";
+    document.getElementById("priority").value = "عادية";
+    document.getElementById("status").value = "تحت الإجراء";
+    document.getElementById("notes").value = "تحت الإجراء";
+    document.getElementById("caseModal").style.display = "flex";
+  };
+
+  window.closeModal = function() {
+    document.getElementById("caseModal").style.display = "none";
+  };
+
+  window.saveCase = async function() {
+    const name = document.getElementById("name").value.trim();
+    const mrn = document.getElementById("mrn").value.trim();
+    const docText = document.getElementById("document").value.trim();
+
+    if (!name || !mrn) {
+      showToast("⚠️ يرجى إدخال اسم المريض ورقم الملف الطبي");
+      return;
+    }
+
+    const today = new Date().toISOString().slice(0, 10);
+
+    if (editId) {
+      const c = cases.find(x => String(x.id) === String(editId));
+      if (c) {
+        c.name = name;
+        c.mrn = mrn;
+        c.nationalId = document.getElementById("nationalId").value.trim() || "—";
+        c.phone = document.getElementById("phone").value.trim();
+        c.type = document.getElementById("type").value;
+        c.department = document.getElementById("department").value.trim();
+        c.document = docText || "مستند طبي";
+        c.company = document.getElementById("company").value.trim();
+        c.priority = document.getElementById("priority").value;
+        c.status = document.getElementById("status").value;
+        c.notes = document.getElementById("notes").value.trim();
+        c.history = c.history || [];
+        c.history.push({ text: `تحديث المعاملة (${c.status})`, date: new Date().toLocaleString("ar-SA") });
+        window.closeModal();
+        window.renderCases();
+        await saveSingleCaseToCloud(c);
+        showToast("تم تحديث المعاملة ومزامنتها تلقائياً على جميع أجهزتك");
+      }
+    } else {
+      const nextSeq = cases.length > 0 ? Math.max(...cases.map(x => Number(x.seq) || 0)) + 1 : 1;
+      const newCase = {
+        id: String(Date.now()),
+        seq: nextSeq,
+        created: today,
+        name,
+        nationalId: document.getElementById("nationalId").value.trim() || "—",
+        mrn,
+        phone: document.getElementById("phone").value.trim(),
+        company: document.getElementById("company").value.trim(),
+        type: document.getElementById("type").value,
+        department: document.getElementById("department").value.trim(),
+        document: docText || "مستند تأميني",
+        priority: document.getElementById("priority").value,
+        status: document.getElementById("status").value,
+        notes: document.getElementById("notes").value.trim() || "تحت الإجراء",
+        history: [{ text: "تم إنشاء المعاملة ومزامنتها سحابياً", date: new Date().toLocaleString("ar-SA") }]
+      };
+      cases.unshift(newCase);
+      window.closeModal();
+      window.renderCases();
+      await saveSingleCaseToCloud(newCase);
+      showToast("تمت إضافة المعاملة وظهرت فوراً في الماك والجوال");
+    }
+  };
+
+  window.editCase = function(id) {
+    const c = cases.find(x => String(x.id) === String(id));
+    if (!c) return;
+    editId = c.id;
+    document.getElementById("modalTitle").innerText = "تعديل معاملة: " + c.name;
+    document.getElementById("name").value = c.name || "";
+    document.getElementById("mrn").value = c.mrn || "";
+    document.getElementById("nationalId").value = c.nationalId || "";
+    document.getElementById("phone").value = c.phone || "";
+    document.getElementById("type").value = c.type || "إدارية";
+    document.getElementById("department").value = c.department || "";
+    document.getElementById("document").value = c.document || "";
+    document.getElementById("company").value = c.company || "";
+    document.getElementById("priority").value = c.priority || "عادية";
+    document.getElementById("status").value = c.status || "تحت الإجراء";
+    document.getElementById("notes").value = c.notes || "";
+    document.getElementById("caseModal").style.display = "flex";
+  };
+
+  window.markDone = async function(id) {
+    const c = cases.find(x => String(x.id) === String(id));
+    if (!c) return;
+    c.status = "تم الإنجاز";
+    c.notes = "تم الإنجاز";
+    c.history = c.history || [];
+    c.history.push({ text: "✓ تم الإنجاز وإغلاق الطلب", date: new Date().toLocaleString("ar-SA") });
+    window.renderCases();
+    await saveSingleCaseToCloud(c);
+    showToast(`تم إنجاز معاملة ${c.name} ومزامنتها فوراً`);
+  };
+
+  window.deleteCaseById = async function(id) {
+    cases = cases.filter(x => String(x.id) !== String(id));
+    window.closeDetails();
+    window.renderCases();
+    await deleteSingleCaseFromCloud(id);
+    showToast("تم حذف المعاملة من جميع الأجهزة");
+  };
+
+  window.openDetails = function(id) {
+    const c = cases.find(x => String(x.id) === String(id));
+    if (!c) return;
+    const wa = buildWhatsAppUrl(c);
+
+    document.getElementById("detailsContent").innerHTML = `
+      <div class="grid" style="margin-bottom:14px;background:#f8fafc;padding:14px;border-radius:12px;border:1px solid var(--line)">
+        <div><strong>اسم المريض:</strong> ${c.name}</div>
+        <div><strong>رقم الملف MRN:</strong> ${c.mrn}</div>
+        <div><strong>رقم الهوية / الجواز:</strong> ${c.nationalId || "—"}</div>
+        <div><strong>الجوال:</strong> <span dir="ltr">${c.phone || "غير مسجل"}</span></div>
+        <div><strong>النوع:</strong> ${c.type}</div>
+        <div><strong>الحالة:</strong> ${statusBadge(c)}</div>
+        <div class="full"><strong>الجهة / التأمين:</strong> ${c.company || "—"}</div>
+        <div class="full"><strong>القسم:</strong> ${c.department || "—"}</div>
+        <div class="full"><strong>المستند المطلوب:</strong> ${c.document}</div>
+        <div class="full"><strong>آخر إجراء:</strong> ${c.notes || "—"}</div>
+      </div>
+
+      <h4 style="margin:12px 0 8px">🕒 السجل الزمني للمتابعة</h4>
+      <div style="display:flex;gap:8px;margin-bottom:12px">
+        <input id="newNoteInput" placeholder="أضف إجراء أو ملاحظة متابعة جديدة..." />
+        <button class="btn btn-primary" onclick="window.addHistoryNote('${c.id}')">＋ إضافة</button>
+      </div>
+      <div class="timeline">
+        ${(c.history || []).slice().reverse().map(h => `
+          <div class="t-item">
+            <strong>${h.text}</strong>
+            <div class="sub">${h.date}</div>
+          </div>
+        `).join("")}
+      </div>
+
+      <div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-top:16px;padding-top:12px;border-top:1px solid var(--line)">
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <a class="btn btn-green" target="_blank" href="${wa}">💬 إرسال واتساب للمريض</a>
+          ${c.status !== "تم الإنجاز" ? `<button class="btn btn-primary" onclick="window.markDone('${c.id}');window.closeDetails();">✓ اعتماد الإنجاز</button>` : ""}
+          <button class="btn btn-orange" onclick="window.closeDetails();window.editCase('${c.id}');">✎ تعديل</button>
+        </div>
+        <button class="btn btn-red" onclick="window.deleteCaseById('${c.id}')">🗑️ حذف</button>
+      </div>
+    `;
+    document.getElementById("detailsModal").style.display = "flex";
+  };
+
+  window.addHistoryNote = async function(id) {
+    const inp = document.getElementById("newNoteInput");
+    const txt = inp.value.trim();
+    if (!txt) return;
+    const c = cases.find(x => String(x.id) === String(id));
+    if (!c) return;
+    c.notes = txt;
+    c.history = c.history || [];
+    c.history.push({ text: txt, date: new Date().toLocaleString("ar-SA") });
+    window.openDetails(id);
+    window.renderCases();
+    await saveSingleCaseToCloud(c);
+    showToast("تم حفظ الإجراء ومزامنته");
+  };
+
+  window.closeDetails = function() {
+    document.getElementById("detailsModal").style.display = "none";
+  };
+
+  window.showPage = function(page) {
+    currentPage = page;
+    ["home", "follow", "archive", "reports", "settings"].forEach(p => {
+      const s = document.getElementById("nav-" + p);
+      const m = document.getElementById("mnav-" + p);
+      if (s) s.classList.toggle("active", p === page);
+      if (m) m.classList.toggle("active", p === page);
+    });
+
+    document.getElementById("casesSection").style.display =
+      (page === "home" || page === "follow" || page === "archive") ? "block" : "none";
+    document.getElementById("reportsSection").style.display = page === "reports" ? "block" : "none";
+    document.getElementById("settingsSection").style.display = page === "settings" ? "block" : "none";
+
+    window.renderCases();
+  };
+
+  function renderReports() {
+    const done = cases.filter(c => c.status === "تم الإنجاز").length;
+    const active = cases.filter(c => c.status !== "تم الإنجاز").length;
+    const late = cases.filter(c => isLate(c)).length;
+    const rate = cases.length ? Math.round((done / cases.length) * 100) : 0;
+
+    document.getElementById("reportsBox").innerHTML = `
+      <div>• إجمالي المعاملات: <strong>${cases.length}</strong></div>
+      <div>• المعاملات المنجزة: <strong>${done}</strong></div>
+      <div>• المعاملات تحت المتابعة: <strong>${active}</strong></div>
+      <div>• المعاملات المتأخرة: <strong>${late}</strong></div>
+      <div>• معاملات إدارية (طلبات مستندات): <strong>${cases.filter(c => c.type === "إدارية").length}</strong></div>
+      <div>• معاملات طبية (تقارير واستفسارات): <strong>${cases.filter(c => c.type === "طبية").length}</strong></div>
+      <div>• حوادث وإصابات عمل: <strong>${cases.filter(c => c.type === "حوادث وإصابات عمل").length}</strong></div>
+      <div>• نسبة الإنجاز: <strong style="color:var(--green);font-size:18px">${rate}%</strong></div>
+    `;
+  }
+
+  window.saveSettings = function() {
+    settings.lateHours = Number(document.getElementById("lateHours").value || 48);
+    settings.defaultCompany = document.getElementById("defaultCompany").value.trim();
+    localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
+    window.renderCases();
+    showToast("تم حفظ الإعدادات");
+  };
+
+  window.exportCSV = function() {
+    const headers = ["م", "التاريخ", "اسم المريض", "رقم الهوية", "رقم الملف MRN", "الجوال", "النوع", "المستند المطلوب", "القسم", "الحالة", "ملاحظات"];
+    const ordered = cases.slice().reverse();
+    const rows = ordered.map((c, i) => [
+      i + 1, c.created || "", c.name || "", c.nationalId || "", c.mrn || "",
+      c.phone || "", c.type || "", c.document || "", c.department || "", c.status || "", c.notes || ""
+    ].map(v => `"${String(v).replace(/"/g, '""')}"`).join(","));
+
+    const csv = "\uFEFF" + [headers.join(","), ...rows].join("\n");
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = "سجل_متابعة_طلبات_التأمين_KSAMC.csv";
+    a.click();
+    showToast("تم تصدير ملف Excel بنجاح");
+  };
+
+  window.exportBackup = function() {
+    const blob = new Blob([JSON.stringify(cases, null, 2)], { type: "application/json" });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = "KSAMC_Backup.json";
+    a.click();
+  };
+
+  window.importBackup = function(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = async (ev) => {
+      try {
+        const imported = JSON.parse(ev.target.result);
+        if (Array.isArray(imported)) {
+          cases = imported;
+          window.renderCases();
+          for (const item of cases) {
+            await saveSingleCaseToCloud(item);
+          }
+          showToast("تم استرجاع النسخة الاحتياطية ومزامنتها");
         }
-    </script>
+      } catch (err) {
+        showToast("⚠️ ملف غير صالح");
+      }
+    };
+    reader.readAsText(file);
+  };
+
+  window.restoreDefaultCases = async function() {
+    cases = JSON.parse(JSON.stringify(SEED_CASES));
+    window.renderCases();
+    for (const item of cases) {
+      await saveSingleCaseToCloud(item);
+    }
+    showToast("تمت استعادة معاملات الشيت الـ 14 ومزامنتها");
+  };
+
+  // تشغيل فوري عند فتح الصفحة
+  document.getElementById("lateHours").value = settings.lateHours || 48;
+  document.getElementById("defaultCompany").value = settings.defaultCompany || "تجمع المدينة المنورة الصحي - إدارة تنمية الإيرادات (CBO)";
+  document.getElementById("liveDateText").innerText = new Date().toLocaleDateString("ar-SA", { weekday: "long", year: "numeric", month: "short", day: "numeric" });
+
+  window.renderCases();
+  initZeroConfigCloud();
+</script>
+
 </body>
 </html>
